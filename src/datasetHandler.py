@@ -15,14 +15,15 @@ from src.config import Config
 
 class DatasetHandler(Dataset):
     """
-    Class to handle the dataset. It will load the data from the xml files and create a list of torch_geometric.data.Data object
+    Class to handle the dataset.
+    It will load the data from the xml files and create a list of torch_geometric.data.Data object
     """
 
     def __init__(self, config: Config, root="", transform=None, pre_transform=None, pre_filter=None):
         self.config = config
         self.label_encoder = preprocessing.LabelEncoder()
         self.dataset = self.config.__getitem__("dataset")
-        self.labels = self.config.__getitem__("labels")
+        self.labels_to_use = self.config.__getitem__("labels_to_use")
         self.position_as_bounding_box = self.config.__getitem__("position_as_bounding_box")
 
         self.data_root_dict = {"muscima++": "./data/muscima++/v1.0/data/",
@@ -54,7 +55,7 @@ class DatasetHandler(Dataset):
         # self.scores_names = os.listdir(self.raw_dir)
 
         # load label classes
-        with open(f'./data/labels/{self.labels}.txt', 'r') as file:
+        with open(f'./data/labels/{self.labels_to_use}.txt', 'r') as file:
             lines = file.readlines()
         self.label_list = np.array([line.strip() for line in lines])  # TODO -> need to remove the "'" ?
         self.label_encoder.classes_ = self.label_list
@@ -67,7 +68,7 @@ class DatasetHandler(Dataset):
 
     @property
     def processed_dir(self) -> str:
-        return osp.join(self.data_root, f'data_processed/{self.labels}/bounding_box_{self.position_as_bounding_box}/')
+        return osp.join(self.data_root, f'data_processed/{self.labels_to_use}/bounding_box_{self.position_as_bounding_box}/')
 
     @property
     def raw_file_names(self):
@@ -83,7 +84,8 @@ class DatasetHandler(Dataset):
 
     def process(self):
         """
-        Process the dataset. It will encode the xml files into torch_geometric.data.Data objects and save them in the processed_dir
+        Process the dataset.
+        It will encode the xml files into torch_geometric.data.Data objects and save them in the processed_dir
         """
         # Skip process if files already exist
         if len(self.raw_paths) == len(os.listdir(self.processed_dir)):
