@@ -28,6 +28,7 @@ class Classifier(torch.nn.Module):
 class Model(torch.nn.Module):
 
     def __init__(self, num_node_features, config):
+        super().__init__()
         self.config = config
         self.classifier = Classifier()
         self.gnn = None
@@ -43,8 +44,6 @@ class Model(torch.nn.Module):
             self.gnn = GNN_GATConv(num_node_features)
         else:
             raise ValueError("Layer type not recognized")
-
-        super().__init__()
 
     def forward(self, x, pos, edge_index) -> Tensor:
         x_dict = self.gnn(x, pos, edge_index)

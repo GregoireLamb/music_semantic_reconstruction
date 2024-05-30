@@ -174,9 +174,11 @@ class DatasetHandler(Dataset):
 
     def get_score_image(self, score: int):
         # TODO simplify and handle other datasets
-        name = self.scores_names[score]
+        name = self.raw_file_names[score]
         if self.dataset == 'muscima++':
-            img = plt.imread(f"{self.data_root}data/images/fulls/{name.rsplit('.xml', 1)[0]}.png")
+            img = plt.imread(f"{self.data_root}/images/{name.rsplit('.xml', 1)[0]}.png")
+            img = 1 - img
+            img = np.stack((img,) * 3, axis=-1)
         elif self.dataset == 'DOREMI':
             # Extracting the part after the first underscore and before '-layout'
             part1 = re.search(r'_(.*?)-layout', name).group(1)

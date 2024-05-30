@@ -31,6 +31,9 @@ class Loader:
                                     # "DOREMI_small": (1., 1.)
                                     }
 
+        self.scale = self.normalisation_scale[config.__getitem__("dataset")]
+        self.set_default_train_val_test_split(config.__getitem__("dataset"))
+
     def load(self, datasetHandler: DatasetHandler) -> None:
         """
         Load the dataset in memory and process the scores
@@ -190,7 +193,7 @@ class Loader:
             raise ValueError("Split not found")
 
         for score in score_split:
-            graph = self.get_data(score)
+            graph = self.get_data(score).to(self.device)
             all_graphs.append(graph)
 
         data_loader = DataLoader(
