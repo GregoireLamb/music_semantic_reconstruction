@@ -41,16 +41,16 @@ def load_model(model_path: str, model: Model, best_model: Model, optimizer, conf
     print("Loading ", model_path)
     checkpoint = torch.load(model_path)
     best_epoch = checkpoint['best_epoch']
-    best_validation_loss = checkpoint['best_loss']
-    model.load_state_dict(checkpoint['last_model_state_dict'])
-    best_model.load_state_dict(checkpoint['best_model_state_dict'])
-    config.__setitem__('starting_epoch', checkpoint['epoch'])
-    starting_epoch = checkpoint['epoch']
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    best_validation_loss = checkpoint['best_validation_loss']
+    model.load_state_dict(checkpoint['model'])
+    best_model.load_state_dict(checkpoint['best_model'])
+    starting_epoch = checkpoint['final_epoch']
+    config.__setitem__('starting_epoch', starting_epoch)
+    optimizer.load_state_dict(checkpoint['optimizer'])
     if config.__getitem__('start_from_best_model'):
-        model.load_state_dict(checkpoint['best_model_state_dict'])
-        starting_epoch = best_epoch
-        optimizer.load_state_dict(checkpoint['best_optimizer_state_dict'])
+        model.load_state_dict(checkpoint['best_model'])
+        starting_epoch = best_epoch + 1
+        optimizer.load_state_dict(checkpoint['best_optimizer'])
     return model, best_model, optimizer, starting_epoch, best_validation_loss
 
 
@@ -127,7 +127,7 @@ def perform_predictions_analysis(graph, predictions, truth, label_encoder, dict=
         primitive2 = graph.edge_index[1][i].item()
 
         class1 = primitive_classes[primitive1]
-        if class1.startswith("notehead"):
+        if class1.startswith("notehea"):
             class2 = primitive_classes[primitive2]
 
             key = f"{class1} - {class2}"
@@ -139,6 +139,8 @@ def perform_predictions_analysis(graph, predictions, truth, label_encoder, dict=
                 dict[key][1] += 1
             else:
                 dict[key][0] += 1
+        else:
+            print("Error in the prediction analysis")
     return dict
 
 
@@ -197,14 +199,14 @@ def save_confusion_matrix(confusion_mat, writer: SummaryWriter):
     :param writer: tensorboard writer
     :return: None
     """
-    img_conf_mat = pd.DataFrame(confusion_mat,
+    img_conf_mat = pd.DataFrame(confusion_mat / np.sum(confusion_mat, axis=1)[:, None],
                                 index=[f'Actual Negative \n(sum = {np.sum(confusion_mat, axis=1)[0]})',
                                        f'Actual Positive \n(sum = {np.sum(confusion_mat, axis=1)[1]})'],
                                 columns=[f'Predicted Negative \n(sum = {confusion_mat[0][0] + confusion_mat[1][0]})',
                                          f'Predicted Positive \n(sum = {confusion_mat[0][1] + confusion_mat[1][1]})'])
 
     # Make the heatmap
-    plt.figure(figsize=(7, 7))
+    plt.figure(figsize=(5, 5))
     sn.heatmap(img_conf_mat, annot=True)
     plt.xlabel('Predicted Label')
     plt.ylabel('Actual Label')
@@ -216,7 +218,7 @@ def save_confusion_matrix(confusion_mat, writer: SummaryWriter):
 
     # Convert the Matplotlib figure to a PIL images
     buffer = BytesIO()
-    plt.savefig(buffer, format='png')
+    plt.savefig(buffer, format='png', dpi=200)
     buffer.seek(0)
     img = Image.open(buffer)
 

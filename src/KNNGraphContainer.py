@@ -114,11 +114,7 @@ class KNNGraphContainer:
         """"
         Cut impossible edges based on the node type
         """
-        edges = {'notehead-full - stem', 'notehead-full - beam', 'notehead-full - 8th_flag', 'notehead-empty - stem',
-                 'notehead-full - duration-dot', 'notehead-full - sharp',
-                 'notehead-full - natural', 'notehead-full - tie', 'notehead-empty - duration-dot',
-                 'notehead-full - 16th_flag', 'notehead-empty - tie',
-                 'notehead-full - flat', 'notehead-empty - sharp', 'notehead-empty - natural'}
+        edges = self.load_authorised_edges()
 
         label_encoder = self.label_encoder
         mask = np.ones(len(graph.edge_index[0]), dtype=bool)
@@ -131,6 +127,18 @@ class KNNGraphContainer:
 
         graph.edge_index = graph.edge_index[:, mask]
         return graph
+
+    def load_authorised_edges(self):
+        """
+        Load the edges that are allowed in the graph
+        """
+        edges = set()
+        path = os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))
+        path = os.path.abspath(os.path.join(self.root, "../labels_and_links/")) #TODO warning depends on the dataset
+        with open(f"{path}/{self.config.__getitem__('labels_to_use')}_links.txt", "r") as f:
+            for line in f:
+                edges.add(line.strip())
+        return edges
 
     # def make_hetero_data(self):
     #     hetero_graph = HeteroData()

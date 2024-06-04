@@ -1,5 +1,13 @@
 matplotlib>=3.9.0
 numpy>=1.26.3
 torch>=2.3.0+cu121
-muscima>=0.10.0
 tqdm>=4.66.4
+pandas>=2.2.2
+seaborn>=0.13.2
+scikit-learn>=1.5.0
+networkx>=3.2.1
+pillow>=10.2.0
+torchvision>=0.18.0+cu121
+PyYAML>=6.0.1
+muscima>=0.10.0
+mung>=1.2

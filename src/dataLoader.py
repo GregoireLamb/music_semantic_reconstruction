@@ -1,5 +1,4 @@
 import os
-import random
 
 import torch
 from torch_geometric.loader import DataLoader
@@ -21,18 +20,13 @@ class Loader:
         self.root = root
         self.data = []
 
-        self.normalisation_scale = {"muscima++": (3403., 2354.5),
-                                    # "musigraph": (2354.5, 310.0),
-                                    # "muscima_measure": (1000, 300),
-                                    # "DOREMI": (2292.5, 1806.5),
-                                    # "muscima++_small": (1., 1.),
-                                    # "musigraph_small": (1., 1.),
-                                    # "muscima_measure_small": (1., 1.),
-                                    # "DOREMI_small": (1., 1.)
+        self.normalisation_scale = {"muscima-pp": (3403., 2354.5),
+                                    "doremi": (2292.5, 1806.5),
+                                    "musigraph": (2354.5, 310.0),
+                                    "musigraph_small": (2354.5, 310.0),
                                     }
 
         self.scale = self.normalisation_scale[config.__getitem__("dataset")]
-        self.set_default_train_val_test_split(config.__getitem__("dataset"))
 
     def load(self, datasetHandler: DatasetHandler) -> None:
         """
@@ -57,6 +51,7 @@ class Loader:
         if os.path.isfile(f'{self.root}./data/loader_snapshot/{file_name}'):  # load the preprocessed data if it exists
             print("Snapchot for loader found, loading ...")
             self.data = torch.load(f'{self.root}./data/loader_snapshot/{file_name}')
+            self.set_default_train_val_test_split(self.config.__getitem__("dataset"))
             return
 
         for score in (pbar := tqdm(range(len(self.datasetHandler)))):
@@ -75,14 +70,7 @@ class Loader:
         torch.save(self.data, f'{self.root}./data/loader_snapshot/{file_name}')
         self.set_default_train_val_test_split(dataset_name)
 
-    def set_default_train_val_test_split(self, dataset_name:str):
-
-        if dataset_name.endswith("_small"):
-            self.train_scores = [0, 1, 2, 3, 4]
-            self.validation_scores = [0, 1, 2, 3, 4]
-            self.test_scores = [0, 1, 2, 3, 4]
-            return
-
+    def set_default_train_val_test_split(self, dataset_name: str):
         # Load a snapshot of the split if exists
         snapshot_file = f'{self.root}./data/loader_snapshot/{dataset_name}_split_train_cal_test.pt'
         if os.path.isfile(snapshot_file):
@@ -90,22 +78,25 @@ class Loader:
             self.train_scores, self.validation_scores, self.test_scores = all_split
             return
 
-        if dataset_name == "muscima++":
-            random.seed(self.config.__getitem__("seed"))
-            test_score_name = self.read_ids_file(f'{self.root}./data/muscima++/v1.0/specifications/testset-independent.txt')
-            self.test_scores = [self.datasetHandler.raw_file_names.index(filename+'.xml') for filename in test_score_name]
-            self.train_scores = [i for i in range(len(self.datasetHandler)) if i not in self.test_scores]
-            self.validation_scores = []
-            for i in range(20):
-                rnd = random.randint(0, len(self.train_scores)-1)
-                self.validation_scores.append(self.train_scores.pop(rnd))
+        elif dataset_name.endswith("_small"):
+            self.train_scores = [0, 1, 2, 3, 4]
+            self.validation_scores = [0, 1, 2, 3, 4]
+            self.test_scores = [0, 1, 2, 3, 4]
+            return
 
-            print(f"Train:")
-            for i in self.train_scores:
-                print(self.datasetHandler.raw_file_names[i])
-            print(f"Validation:")
-            for i in self.validation_scores:
-                print(self.datasetHandler.raw_file_names[i])
+        else:
+            split_location_dict = {"muscima-pp": self.root+"./data/muscima-pp/v2.1/specifications/",
+                                   "doremi": self.root+"./data/DoReMi_v1/",
+                                   "musigraph": self.root+"./data/MUSIGRAPH/"}
+
+            split_location = split_location_dict.get(dataset_name, None)
+
+            if split_location is None:
+                raise ValueError(f"Dataset {dataset_name} has no split file location registered")
+
+            train_ids = self.read_ids_file(f'{split_location}/train.ids')
+            validation_ids = self.read_ids_file(f'{split_location}/validation.ids')
+            test_ids = self.read_ids_file(f'{split_location}/test.ids')
 
 
         # elif dataset_name == "muscima_measure":
@@ -127,46 +118,13 @@ class Loader:
         #
         #     all_split = [self.train_scores, self.validation_scores, self.test_scores]
         #     torch.save(all_split, f'{self.root}/data/loader_data/muscima_measure_split_train_val_test.pt')
-        #
-        # elif dataset_name == "musigraph":
-        #
-        #     if os.path.isfile(f'{self.root}./data/loader_data/musigraph_split_train_cal_test.pt'):
-        #         all_split = torch.load(f'{self.root}./data/loader_data/musigraph_split_train_cal_test.pt')
-        #         self.train_scores, self.validation_scores, self.test_scores = all_split
-        #         return
-        #
-        #     train_ids = self.read_ids_file(f'{self.root}./data/MUSIGRAPH/train.ids')
-        #     validation_ids = self.read_ids_file(f'{self.root}./data/MUSIGRAPH/validation.ids')
-        #     test_ids = self.read_ids_file(f'{self.root}./data/MUSIGRAPH/test.ids')
-        #
-        #     self.train_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in train_ids]
-        #     self.validation_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in validation_ids]
-        #     self.test_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in test_ids]
-        #
-        #     all_split = [self.train_scores, self.validation_scores, self.test_scores]
-        #     torch.save(all_split, f'{self.root}/data/loader_data/musigraph_split_train_cal_test.pt')
-        #
-        # elif dataset_name == "DOREMI":
-        #     if os.path.isfile(f'{self.root}./data/loader_data/DOREMI_split_train_cal_test.pt'):
-        #         all_split = torch.load(f'{self.root}./data/loader_data/DOREMI_split_train_cal_test.pt')
-        #         self.train_scores, self.validation_scores, self.test_scores = all_split
-        #         return
-        #
-        #     train_ids = self.read_ids_file(f'{self.root}./data/DoReMi_v1/train.ids')
-        #     validation_ids = self.read_ids_file(f'{self.root}./data/DoReMi_v1/validation.ids')
-        #     test_ids = self.read_ids_file(f'{self.root}./data/DoReMi_v1/test.ids')
-        #
-        #     self.train_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in train_ids]
-        #     self.validation_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in validation_ids]
-        #     self.test_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in test_ids]
-        #
-        #     all_split = [self.train_scores, self.validation_scores, self.test_scores]
-        #     torch.save(all_split, f'{self.root}/data/loader_data/DOREMI_split_train_cal_test.pt')
+
+        self.train_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in train_ids]
+        self.validation_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in validation_ids]
+        self.test_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in test_ids]
 
         all_split = [self.train_scores, self.validation_scores, self.test_scores]
         torch.save(all_split, snapshot_file)
-
-
 
     def get_data(self, index: int):
         return self.data[index].get_data()

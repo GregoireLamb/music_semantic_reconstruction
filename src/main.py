@@ -28,7 +28,7 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
     best_optimizer = torch.optim.Adam(list(model.parameters()), lr=config.__getitem__("learning_rate"))
 
     if model_to_load != False:
-        model, best_model, optimizer, starting_epoch, best_validation_loss = load_model(model_to_load,
+        model, best_model, optimizer, start_epoch, best_validation_loss = load_model(model_to_load,
                                                                                         model, best_model,
                                                                                         optimizer, config)
     if config.__getitem__("start_from_best_model"):
@@ -105,17 +105,17 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
     writer.flush()
 
     result = {
-        "best_model": best_model,
-        "best_optimizer": best_optimizer,
-        "model": model,
-        "optimizer": optimizer,
+        "best_model": best_model.state_dict(),
+        "best_optimizer": best_optimizer.state_dict(),
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
         "best_epoch": best_epoch,
         "best_validation_loss": best_validation_loss,
         "start_epoch": start_epoch,
         "final_epoch": start_epoch + config.__getitem__("n_epochs")
     }
 
-    return result
+    return result, best_model
 
 
 def validate(loader: Loader, model: Model, device: torch.device, loss_function: torch.nn.Module):
@@ -171,11 +171,13 @@ def test(model: Model):
         conf = confusion_matrix(truth, predictions)
 
         if len(conf) == 1:  # case there is only positive or negative edges
-            print("Only positive or negative edges in the confusion matrix ", len(conf))
-            if truth[0] == 1:
-                conf = np.array([[0, 0], conf[0]])
-            else:
-                conf = np.array([conf[0], [0, 0]])
+            print("Unusual conf matrix")
+            if len(conf[0]) != 1:
+                print("Only positive or negative edges in the confusion matrix ", len(conf))
+                if truth[0] == 1:
+                    conf = np.array([[0, 0], conf[0]])
+                else:
+                    conf = np.array([conf[0], [0, 0]])
 
         confusion_mat += conf
         accuracy.append(accuracy_score(truth, predictions))
@@ -220,15 +222,15 @@ if __name__ == '__main__':
     dataset = DatasetHandler(config)
     loader.load(dataset)
 
-    train_results = train(config=config,
-                          writer=writer,
-                          loader=loader,
-                          device=device,
-                          model_to_load=config.__getitem__("load_model"))
+    train_results, best_model = train(config=config,
+                                      writer=writer,
+                                      loader=loader,
+                                      device=device,
+                                      model_to_load=config.__getitem__("load_model"))
 
     print("Best model is reached at epoch: ", train_results["best_epoch"])
 
-    test(train_results["best_model"])
+    test(best_model)
 
     save_model(config, train_results, run_name)
 
