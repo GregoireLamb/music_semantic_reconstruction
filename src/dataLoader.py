@@ -131,8 +131,8 @@ class Loader:
 
     def set_split(self, train, test, validation):
         self.train_scores = train
-        self.validation_scores = validation
         self.test_scores = test
+        self.validation_scores = validation
 
     def get_dataLoader(self, split="train") -> DataLoader:
         """

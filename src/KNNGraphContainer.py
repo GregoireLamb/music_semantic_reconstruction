@@ -133,8 +133,10 @@ class KNNGraphContainer:
         Load the edges that are allowed in the graph
         """
         edges = set()
-        path = os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))
-        path = os.path.abspath(os.path.join(self.root, "../labels_and_links/")) #TODO warning depends on the dataset
+        if os.path.isdir(os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))):
+            path = os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))
+        else:
+            path = os.path.abspath(os.path.join(self.root, "../labels_and_links/")) #TODO warning depends on the dataset
         with open(f"{path}/{self.config.__getitem__('labels_to_use')}_links.txt", "r") as f:
             for line in f:
                 edges.add(line.strip())

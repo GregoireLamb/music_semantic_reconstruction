@@ -4,7 +4,6 @@ import re
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import torch
 from mung.io import read_nodes_from_file
 from sklearn import preprocessing
@@ -60,7 +59,8 @@ class DatasetHandler(Dataset):
 
     @property
     def processed_dir(self) -> str:
-        return osp.join(self.data_root, f'data_processed/{self.labels_to_use}/bounding_box_{self.position_as_bounding_box}/')
+        return osp.join(self.data_root,
+                        f'data_processed/{self.labels_to_use}/bounding_box_{self.position_as_bounding_box}/')
 
     @property
     def raw_file_names(self):

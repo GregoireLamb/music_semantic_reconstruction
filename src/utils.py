@@ -140,7 +140,7 @@ def perform_predictions_analysis(graph, predictions, truth, label_encoder, dict=
             else:
                 dict[key][0] += 1
         else:
-            print("Error in the prediction analysis")
+            print("Warning: Error in the prediction analysis, ignore warning if using undirected edges")
     return dict
 
 

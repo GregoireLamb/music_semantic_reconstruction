@@ -22,23 +22,23 @@ class GNN_graphSage(torch.nn.Module):
             self.conv1_config = {'in_channels': num_node_features,
                                  'out_channels': 256,
                                  'aggr': 'mean'}
-            self.conv2_config = {'in_channels': 256,
-                                 'out_channels': 512,
-                                 'aggr': 'mean'}
+            # self.conv2_config = {'in_channels': 256,
+            #                      'out_channels': 512,
+            #                      'aggr': 'mean'}
 
         self.conv1 = SAGEConv(**self.conv1_config)
-        self.conv2 = SAGEConv(**self.conv2_config)
         if not small:
+            self.conv2 = SAGEConv(**self.conv2_config)
             self.conv3 = SAGEConv(**self.conv3_config)
 
     def forward(self, x, _, edge_index):
 
         x = self.conv1(x, edge_index)
         x = F.relu(x)
-        x = self.conv2(x, edge_index)
-        x = F.relu(x)
 
         if not self.small:
+            x = self.conv2(x, edge_index)
+            x = F.relu(x)
             x = self.conv3(x, edge_index)
             x = F.relu(x)
         x = F.normalize(x, dim=1)
