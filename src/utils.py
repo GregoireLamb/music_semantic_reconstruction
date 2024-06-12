@@ -45,9 +45,9 @@ def load_model(model_path: str, model: Model, best_model: Model, optimizer, conf
     model.load_state_dict(checkpoint['model'])
     best_model.load_state_dict(checkpoint['best_model'])
     starting_epoch = checkpoint['final_epoch']
-    config.__setitem__('starting_epoch', starting_epoch)
+    config['starting_epoch'] = starting_epoch
     optimizer.load_state_dict(checkpoint['optimizer'])
-    if config.__getitem__('start_from_best_model'):
+    if config['start_from_best_model']:
         model.load_state_dict(checkpoint['best_model'])
         starting_epoch = best_epoch + 1
         optimizer.load_state_dict(checkpoint['best_optimizer'])

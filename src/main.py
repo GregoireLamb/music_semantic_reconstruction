@@ -1,8 +1,7 @@
-import copy
+import os.path
 from datetime import datetime
 
 import torch_geometric.transforms as T
-from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import confusion_matrix, accuracy_score
 from torch.optim import lr_scheduler
 from tqdm import tqdm
@@ -24,33 +23,33 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
     model = Model(init_n_label, config).to(device)
     best_model = Model(init_n_label, config).to(device)
 
-    optimizer = torch.optim.Adam(list(model.parameters()), lr=config.__getitem__("learning_rate"))
-    best_optimizer = torch.optim.Adam(list(model.parameters()), lr=config.__getitem__("learning_rate"))
+    optimizer = torch.optim.Adam(list(model.parameters()), lr=config['learning_rate'])
+    best_optimizer = torch.optim.Adam(list(model.parameters()), lr=config['learning_rate'])
 
     if model_to_load != False:
         model, best_model, optimizer, start_epoch, best_validation_loss = load_model(model_to_load,
-                                                                                        model, best_model,
-                                                                                        optimizer, config)
-    if config.__getitem__("start_from_best_model"):
+                                                                                     model, best_model,
+                                                                                     optimizer, config)
+    if config['start_from_best_model']:
         best_optimizer = copy.deepcopy(optimizer)
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
                                                mode='min',
-                                               factor=config.__getitem__("scheduler_factor"),
-                                               patience=config.__getitem__("scheduler_patience"))
-    config.__setitem__('model_config', model.__repr__())
+                                               factor=config['scheduler_factor'],
+                                               patience=config['scheduler_patience'])
+    config['model_config'] = model.__repr__()
     model.train().to(device)
 
     data_loader = loader.get_dataLoader(split="train")
 
     # Setup weight and loss function
-    weight = config.__getitem__("weight_imbalance")
+    weight = config['weight_imbalance']
     if weight == -1:
         weight = compute_weight_imbalance(data_loader)
-        config.config["weight_imbalance"] = weight
+        config["weight_imbalance"] = weight
 
     loss_function = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([weight], device=device)).to(device)
 
-    for epoch in (pbar := tqdm(range(start_epoch, start_epoch + config.__getitem__("n_epochs")))):
+    for epoch in (pbar := tqdm(range(start_epoch, start_epoch + config['n_epochs']))):
         pbar.set_description(f"Training")
         writer.add_scalar("lr", optimizer.param_groups[0]["lr"], epoch)
         loss_values = []
@@ -58,14 +57,14 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
             # graph_batch = graph_batch.to(device)
             optimizer.zero_grad()
 
-            if config.__getitem__("undirected_edges"):
+            if config['undirected_edges']:
                 graph_batch = T.Compose([T.ToUndirected()])(graph_batch)
 
-            # if config.__getitem__("use_sparse_adj"):
+            # if config['use_sparse_adj']:
             #     graph_batch = T.Compose([T.ToSparseTensor()])(graph_batch)
             #     # Only edge_index is turned into adj_t (the other tensor arn't but having them sparse leads to error)
             #     predictions = model(x=graph_batch.x, pos=graph_batch.pos, edge_index=graph_batch.adj_t).to(device)
-            # elif config.__getitem__("hetero_data"):
+            # elif config['hetero_data']:
             #     predictions = model(x=graph_batch.x_dict, pos=graph_batch.pos,
             #                         edge_index=graph_batch.edge_index_dict).to(device)
             # else:
@@ -79,7 +78,7 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
         writer.add_scalar("Loss/train", np.mean(loss_values), epoch)
         writer.flush()
 
-        validation_loss = validate(loader, model, device, loss_function)
+        validation_loss = validate(loader, model, device, loss_function, config)
         writer.add_scalar("Loss/validation", validation_loss, epoch)
 
         if validation_loss < best_validation_loss:
@@ -92,14 +91,14 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
         scheduler.step(validation_loss)
 
         # Jump back to best known model if lr change
-        if config.__getitem__("jump_back_on_lr_change"):
+        if config['jump_back_on_lr_change']:
             if previous_lr != optimizer.param_groups[0]["lr"]:
                 model = copy.deepcopy(best_model)
                 optimizer = torch.optim.Adam(list(model.parameters()), lr=optimizer.param_groups[0]["lr"])
                 scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
                                                            mode='min',
-                                                           factor=config.__getitem__("scheduler_factor"),
-                                                           patience=config.__getitem__("scheduler_patience"))
+                                                           factor=config['scheduler_factor'],
+                                                           patience=config['scheduler_patience'])
 
     writer.add_text("config", config.__repr__())
     writer.flush()
@@ -112,26 +111,27 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
         "best_epoch": best_epoch,
         "best_validation_loss": best_validation_loss,
         "start_epoch": start_epoch,
-        "final_epoch": start_epoch + config.__getitem__("n_epochs")
+        "final_epoch": start_epoch + config['n_epochs']
     }
 
     return result, best_model
 
 
-def validate(loader: Loader, model: Model, device: torch.device, loss_function: torch.nn.Module):
+def validate(loader: Loader, model: Model, device: torch.device, loss_function: torch.nn.Module, config:Config):
     loss_values = []
     data_loader = loader.get_dataLoader(split="validation")
     for graph_validation_batch in data_loader:
-        if config.__getitem__("undirected_edges"):
+        if config['undirected_edges']:
             graph_validation_batch = T.Compose([T.ToUndirected()])(graph_validation_batch)
-        predictions = model(x=graph_validation_batch.x, pos=graph_validation_batch.pos,edge_index=graph_validation_batch.edge_index)
+        predictions = model(x=graph_validation_batch.x, pos=graph_validation_batch.pos,
+                            edge_index=graph_validation_batch.edge_index)
         predictions = predictions.view(-1).to(device)
         loss_val = loss_function(predictions, graph_validation_batch.truth)
         loss_values.append(loss_val.item())
     return np.mean(loss_values)
 
 
-def test(model: Model):
+def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWriter, config: Config):
     model = model.to(device)
     model.eval()
     link_analyse_dict = {}
@@ -139,12 +139,12 @@ def test(model: Model):
     accuracy, edit_distances, music_error_rate = [], [], []
 
     score_loader = loader.get_dataLoader(split="test")
-    do_visualize_first_score = config.__getitem__("visualize_first_score")
+    do_visualize_first_score = config['visualize_first_score']
 
     for graph in (pbar := tqdm(score_loader)):
         pbar.set_description(f"Testing ")
 
-        if config.__getitem__("undirected_edges"):
+        if config['undirected_edges']:
             graph = T.Compose([T.ToUndirected()])(graph)
 
         predictions = model(x=graph.x, pos=graph.pos, edge_index=graph.edge_index)
@@ -165,7 +165,7 @@ def test(model: Model):
             score_image = loader.datasetHandler.get_score_image(first_score.index)
             predictions_first_score = predictions[0:first_score.edge_index.shape[1]]
             generate_visualizations(first_score, predictions_first_score, writer, score_image,
-                                    loader=loader, dataset=config.__getitem__('dataset'))
+                                    loader=loader, dataset=config['dataset'])
             do_visualize_first_score = False
 
         conf = confusion_matrix(truth, predictions)
@@ -204,18 +204,30 @@ def test(model: Model):
     writer.add_text("Link Analysis", str(link_analyse_dict))
     writer.flush()
 
+    return np.mean(accuracy), np.mean(edit_distances), np.mean(music_error_rate)
 
-def save_model(config: Config, train_results: dict, run_name: str):
-    if config.__getitem__("save_model"):
+
+
+def save_model(config: Config, train_results: dict, run_name: str, accuracy, edit_distance, mer):
+    if config["save_model"]:
         print("saving model ...")
         torch.save(train_results, './models/' + run_name + '.pth')
+    # create file n_neigbhors_exploration if not exists and append edit dist
+    if not os.path.isfile('./results.csv'):
+        with open('./results.csv', "w") as file:
+            head_line = 'experiment,' + ','.join([str(key) for key in config.keys()]) + ',edit_distance,MER,Accuracy\n'
+            file.write(head_line)
+            file.close()
 
+    with open('./results.csv', "a") as file:
+        msg = run_name + ',' + ','.join([str(value) for value in config.values()]) + ',' + str(accuracy)+',' + str(edit_distance)+',' + str(mer)+ '\n'
+        file.write(msg)
 
-if __name__ == '__main__':
-    config = Config()
-    seed_everything_(config.__getitem__("seed"))
-    run_name = 'run_' + datetime.now().strftime('%m-%d-%Y_%H-%M')
-    writer = SummaryWriter('./runs/'+run_name)
+def main(config_path="./config.yml"):
+    config = Config(path=config_path)
+    seed_everything_(config['seed'])
+    run_name = config_path.split('/')[-1].split('.')[0] + "_" + datetime.now().strftime('%m-%d-%Y_%H-%M')
+    writer = SummaryWriter('./runs/' + run_name)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     loader = Loader(config, device)
 
@@ -226,13 +238,20 @@ if __name__ == '__main__':
                                       writer=writer,
                                       loader=loader,
                                       device=device,
-                                      model_to_load=config.__getitem__("load_model"))
+                                      model_to_load=config['load_model'])
 
-    print("Best model is reached at epoch: ", train_results["best_epoch"])
+    print("Best model is reached at epoch: ", train_results['best_epoch'])
 
-    test(best_model)
+    accuracy, edit_distance, mer = test(best_model, device, loader, writer, config)
 
-    save_model(config, train_results, run_name)
+    save_model(config, train_results, run_name, accuracy, edit_distance, mer)
 
     writer.flush()
     writer.close()
+
+if __name__ == '__main__':
+    configs = os.listdir('./waiting_list')
+    for file in configs:
+        config_path = f'./waiting_list/{file}'
+        main(config_path=config_path)
+

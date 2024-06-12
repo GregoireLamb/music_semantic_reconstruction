@@ -26,7 +26,7 @@ class Loader:
                                     "musigraph_small": (2354.5, 310.0),
                                     }
 
-        self.scale = self.normalisation_scale[config.__getitem__("dataset")]
+        self.scale = self.normalisation_scale[config['dataset']]
 
     def load(self, datasetHandler: DatasetHandler) -> None:
         """
@@ -37,22 +37,24 @@ class Loader:
         index = 0
         self.datasetHandler = datasetHandler
 
-        dataset_name = self.config.__getitem__("dataset")
-        labels_to_use = self.config.__getitem__("labels_to_use")
-        position_as_bounding_box = "bounding_box" if self.config.__getitem__(
-            "position_as_bounding_box") else "pos_height_width"
-        n_neighbors_KNN = self.config.__getitem__("n_neighbors_KNN")
-        prefilter_KNN = "prefilter" if self.config.__getitem__("prefilter_KNN") else "no_prefilter"
-        normalize_positions = "normalized" if self.config.__getitem__("normalize_positions") else "not_normalized"
+        dataset_name = self.config['dataset']
+        labels_to_use = self.config['labels_to_use']
+        position_as_bounding_box = "bounding_box" if self.config['position_as_bounding_box'] else 'pos_height_width'
+        n_neighbors_KNN = self.config['n_neighbors_KNN']
+        prefilter_KNN = "prefilter" if self.config['prefilter_KNN'] else "no_prefilter"
+        normalize_positions = "normalized" if self.config['normalize_positions'] else "not_normalized"
 
         file_name = (f'data_loader_{dataset_name}_{labels_to_use}_{position_as_bounding_box}_{n_neighbors_KNN}_'
                      f'{prefilter_KNN}_{normalize_positions}.pt')
 
-        if os.path.isfile(f'{self.root}./data/loader_snapshot/{file_name}'):  # load the preprocessed data if it exists
+        file_pat = os.path.abspath(os.path.join(self.root, f'./data/loader_snapshot/{file_name}'))
+        if os.path.isfile(file_pat):  # load the preprocessed data if it exists
             print("Snapchot for loader found, loading ...")
             self.data = torch.load(f'{self.root}./data/loader_snapshot/{file_name}')
-            self.set_default_train_val_test_split(self.config.__getitem__("dataset"))
+            self.set_default_train_val_test_split(self.config['dataset'])
             return
+        else:
+            print(f"No snapshot found in {file_pat}")
 
         for score in (pbar := tqdm(range(len(self.datasetHandler)))):
             pbar.set_description(f"Processing dataset")
@@ -156,7 +158,7 @@ class Loader:
 
         data_loader = DataLoader(
             all_graphs,
-            batch_size=self.config.__getitem__("batch_size"),
+            batch_size=self.config['batch_size'],
             shuffle=True,
         )
         return data_loader

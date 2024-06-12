@@ -18,3 +18,9 @@ class Config:
 
     def __repr__(self):
         return str(self.config)
+
+    def keys(self):
+        return self.config.keys()
+
+    def values(self):
+        return self.config.values()
