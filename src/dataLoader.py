@@ -1,6 +1,7 @@
 import os
 
 import torch
+import torch_geometric.transforms as T
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
@@ -21,7 +22,9 @@ class Loader:
         self.data = []
 
         self.normalisation_scale = {"muscima-pp": (3403., 2354.5),
+                                    "muscima_measure_cut": (2132, 3157), # some measure are almost a full page
                                     "doremi": (2292.5, 1806.5),
+                                    "doremi_measure_cut": (2292.5, 1806.5), #TODO
                                     "musigraph": (2354.5, 310.0),
                                     "musigraph_small": (2354.5, 310.0),
                                     }
@@ -87,9 +90,11 @@ class Loader:
             return
 
         else:
-            split_location_dict = {"muscima-pp": self.root+"./data/muscima-pp/v2.1/specifications/",
-                                   "doremi": self.root+"./data/DoReMi_v1/",
-                                   "musigraph": self.root+"./data/MUSIGRAPH/"}
+            split_location_dict = {"muscima-pp": self.root + "./data/muscima-pp/v2.1/specifications/",
+                                   "muscima_measure_cut": self.root + "./data/muscima-pp/measure_cut/specifications/",
+                                   "doremi": self.root + "./data/DoReMi_v1/",
+                                   "doremi_measure_cut": self.root + "./data/DoReMi_v1/measure_cut/",
+                                   "musigraph": self.root + "./data/MUSIGRAPH/"}
 
             split_location = split_location_dict.get(dataset_name, None)
 
@@ -99,7 +104,6 @@ class Loader:
             train_ids = self.read_ids_file(f'{split_location}/train.ids')
             validation_ids = self.read_ids_file(f'{split_location}/validation.ids')
             test_ids = self.read_ids_file(f'{split_location}/test.ids')
-
 
         # elif dataset_name == "muscima_measure":
         #     train_ids = self.read_ids_file(f'{self.root}./data/MUSCIMA_measure/train_manual.ids')
@@ -154,6 +158,22 @@ class Loader:
 
         for score in score_split:
             graph = self.get_data(score).to(self.device)
+
+            if self.config['undirected_edges']:
+                # to undirected mess up the edge order and the truth need to be re-established
+                truth_set = set()
+                for i, edge in enumerate(zip(graph.edge_index[0].tolist(), graph.edge_index[1].tolist())):
+                    if graph.truth[i] == 1:
+                        truth_set.add(edge)
+                        truth_set.add((edge[1],edge[0]))
+
+                graph = T.Compose([T.ToUndirected()])(graph)
+                new_truth = torch.zeros(graph.edge_index.shape[1])
+
+                for i, edge in enumerate(zip(graph.edge_index[0].tolist(), graph.edge_index[1].tolist())):
+                    if edge in truth_set:
+                        new_truth[i] = 1
+                graph.truth = new_truth
             all_graphs.append(graph)
 
         data_loader = DataLoader(

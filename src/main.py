@@ -1,6 +1,7 @@
 import os.path
 from datetime import datetime
 
+import torch
 import torch_geometric.transforms as T
 from sklearn.metrics import confusion_matrix, accuracy_score
 from torch.optim import lr_scheduler
@@ -57,8 +58,8 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
             # graph_batch = graph_batch.to(device)
             optimizer.zero_grad()
 
-            if config['undirected_edges']:
-                graph_batch = T.Compose([T.ToUndirected()])(graph_batch)
+            # if config['undirected_edges']:
+            #     graph_batch = T.Compose([T.ToUndirected()])(graph_batch)
 
             # if config['use_sparse_adj']:
             #     graph_batch = T.Compose([T.ToSparseTensor()])(graph_batch)
@@ -111,7 +112,8 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
         "best_epoch": best_epoch,
         "best_validation_loss": best_validation_loss,
         "start_epoch": start_epoch,
-        "final_epoch": start_epoch + config['n_epochs']
+        "final_epoch": start_epoch + config['n_epochs'],
+        "config": config.__repr__()
     }
 
     return result, best_model
@@ -144,15 +146,13 @@ def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWrit
     for graph in (pbar := tqdm(score_loader)):
         pbar.set_description(f"Testing ")
 
-        if config['undirected_edges']:
-            graph = T.Compose([T.ToUndirected()])(graph)
-
         predictions = model(x=graph.x, pos=graph.pos, edge_index=graph.edge_index)
         predictions = predictions.view(-1)
+
         truth = np.round(graph.truth.tolist())
         predictions = np.round(predictions.tolist())
 
-        ged, mer = compute_ged_mer_for_batch(graph, predictions)
+        ged, mer = compute_ged_mer_for_batch(graph, predictions, truth, config=config)
         edit_distances.extend(ged)
         music_error_rate.extend(mer)
 
@@ -162,8 +162,10 @@ def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWrit
 
         if do_visualize_first_score:
             first_score = graph.to_data_list()[0]
+            n_edges = first_score.edge_index.shape[1]
             score_image = loader.datasetHandler.get_score_image(first_score.index)
-            predictions_first_score = predictions[0:first_score.edge_index.shape[1]]
+            predictions_first_score = predictions[0:n_edges]
+
             generate_visualizations(first_score, predictions_first_score, writer, score_image,
                                     loader=loader, dataset=config['dataset'])
             do_visualize_first_score = False
@@ -204,7 +206,7 @@ def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWrit
     writer.add_text("Link Analysis", str(link_analyse_dict))
     writer.flush()
 
-    return np.mean(accuracy), np.mean(edit_distances), np.mean(music_error_rate)
+    return np.mean(accuracy), np.mean(edit_distances), np.mean(music_error_rate), link_analyse_dict
 
 
 
@@ -242,7 +244,7 @@ def main(config_path="./config.yml"):
 
     print("Best model is reached at epoch: ", train_results['best_epoch'])
 
-    accuracy, edit_distance, mer = test(best_model, device, loader, writer, config)
+    accuracy, edit_distance, mer, link_analyse_dict = test(best_model, device, loader, writer, config)
 
     save_model(config, train_results, run_name, accuracy, edit_distance, mer)
 
@@ -254,4 +256,5 @@ if __name__ == '__main__':
     for file in configs:
         config_path = f'./waiting_list/{file}'
         main(config_path=config_path)
+        break
 

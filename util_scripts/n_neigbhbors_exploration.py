@@ -21,10 +21,10 @@ from src.dataLoader import Loader
 
 output_path = './util_scripts/results/'
 dataset_names = ['musigraph'] #, 'musigraph']  # ["musigraph", "muscima-pp"]
-label_to_use = '8_labels'
+label_to_use = '7_labels'
 datasetHandler_list = []
 config = Config()
-n_values = [13]  # msucima-pp: 14, 18, 22, // musigraph 14
+n_values = [5]  # msucima-pp: 14, 18, 22, // musigraph 14
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 config['labels_to_use'] = label_to_use
@@ -55,7 +55,7 @@ for dataset_name in dataset_names:
             count_edges_in_knn += len(truth)
             count_objects += int(graph.x.size()[0])
 
-            ged, mer = compute_ged_mer_for_batch(graph, predictions)
+            ged, mer = compute_ged_mer_for_batch(graph, predictions, truth, config)
             edit_distances.extend(ged)
             music_error_rate.extend(mer)
 

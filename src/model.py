@@ -10,7 +10,7 @@ class Classifier(torch.nn.Module):
     def __init__(self):
         super(Classifier, self).__init__()
 
-    def forward(self, node_embeddings: Tensor, edge_label_index: Tensor) -> Tensor:
+    def forward(self, node_embeddings: Tensor, edge_index: Tensor) -> Tensor:
         # Convert node embeddings to edge-level representations:
 
         # if not torch.is_tensor(edge_label_index): # Deals with the case where edge_label_index is a sparse tensor
@@ -18,8 +18,8 @@ class Classifier(torch.nn.Module):
         #     row, col , edge_attr = edge_label_index.t().coo()
         #     edge_label_index = torch.stack([row, col], dim=0)
 
-        edge_feat_node_1 = node_embeddings[edge_label_index[0]]
-        edge_feat_node_2 = node_embeddings[edge_label_index[1]]
+        edge_feat_node_1 = node_embeddings[edge_index[0]]
+        edge_feat_node_2 = node_embeddings[edge_index[1]]
 
         cross_p = (edge_feat_node_1 * edge_feat_node_2).sum(dim=-1)
         return cross_p
@@ -40,6 +40,10 @@ class Model(torch.nn.Module):
             self.gnn = GNN_graphSage(num_node_features)
         elif layer_type == "graphSAGE_small":
             self.gnn = GNN_graphSage(num_node_features, small=True)
+        elif layer_type == "graphSAGE_medium":
+            self.gnn = GNN_graphSage(num_node_features, medium=True)
+        elif layer_type == "graphSAGE_large":
+            self.gnn = GNN_graphSage(num_node_features, large=True)
         elif layer_type == "gatconv":
             self.gnn = GNN_GATConv(num_node_features)
         else:
@@ -59,5 +63,7 @@ class Model(torch.nn.Module):
             msg += f', {self.gnn.conv2_config}'
         if hasattr(self.gnn, 'conv3_config'):
             msg += f', {self.gnn.conv3_config}'
+        if hasattr(self.gnn, 'conv4_config'):
+            msg += f', {self.gnn.conv4_config}'
 
         return msg

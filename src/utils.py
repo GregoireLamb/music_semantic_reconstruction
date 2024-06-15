@@ -62,7 +62,7 @@ def compute_weight_imbalance(data_loader: DataLoader) -> float:
     return len(all_t) / max(1, torch.sum(all_t).item())
 
 
-def edit_distance(original_set, predicted_set):
+def edit_distance(original_set, predicted_set, config):
     """
     Compute the edit distance between two set of edges, original_set is considered as the ground truth
     """
@@ -71,15 +71,31 @@ def edit_distance(original_set, predicted_set):
     set2 = {(predicted_set[0][i].item(), predicted_set[1][i].item())
             for i in range(len(predicted_set[0]))}
 
-    dist = len(set1.union(set2)) - len(set1.intersection(set2))
+    if config['undirected_edges']:
+        set2_tmp = set2.copy()
+        for i in set2:
+            if not (i[1], i[0]) in set2_tmp:
+                set2_tmp.add(i)
+        set2 = set2_tmp
+        set_3 = set2 - set1.intersection(set2)
+        for i in set_3:
+            set2.remove(i)
+            set2.add((i[1],i[0]))
+    # print('2 Len set 2', len(set2))
 
+    dist = len(set1.union(set2)) - len(set1.intersection(set2))
+    # print("-- graph edit dist")
+    # print(set1.intersection(set2))
+    # print("set1", set1)
+    # print("set2", set2)
     mer = -1
     if len(set1) > 0:
         mer = dist / len(set1)
+    # print("dist", dist)
     return dist, mer
 
 
-def compute_ged_mer_for_graph(graph, predictions):
+def compute_ged_mer_for_graph(graph, predictions, true, config, label_encoder=None):
     """
     Genrate the list of predicted edges and recover the list of original edges
     and compute the GED and MER
@@ -89,26 +105,41 @@ def compute_ged_mer_for_graph(graph, predictions):
 
     original_edge_set = [predicted_graph.original_edges_in, predicted_graph.original_edges_out]
 
-    return edit_distance(original_edge_set, predicted_graph.edge_index)
+    return edit_distance(original_edge_set, predicted_graph.edge_index, config)
 
 
-def compute_ged_mer_for_batch(graph, predictions):
+def compute_ged_mer_for_batch(graph, predictions, truth, config):
     """
     Compute the GED and MER for a batch of graphs
     """
     i, j = 0, 0
     dist, mer = [], []
+
+    # len_edge = 0
+    # for g in graph.to_data_list():
+    #     len_edge += g.edge_index.shape[1]
+
+    # print("all len edge", len_edge, "len graph ", graph.edge_index.shape[1])
+
     for g in graph.to_data_list():
+        n_edges = g.edge_index.shape[1]
         i = j
-        j = i + g.edge_index.shape[1]
+
+        # if config['undirected_edges']:
+        #     n_edges = g.edge_index.shape[1] * 2  # TODO Unexpected behavior of ToUndirected and dataLoader
+        #     g.edge_index = graph.edge_index[:, i:n_edges]
+        # print('nedge - i', n_edges, i, n_edges - i)
+
+        j = i + n_edges
+        # print('nedges ', n_edges, 'took : ', j-i ,"out of ", graph.edge_index.shape[1])
         pred = predictions[i:j]
-        d, m = compute_ged_mer_for_graph(g, pred)
+        true = truth[i:j]
+        d, m = compute_ged_mer_for_graph(g, pred, true, config)
         dist.append(d)
 
         if m != -1:  # if the graph has no edges but there is a false positive
             mer.append(m)
 
-        # assert np.mean(med) == sum(dist)/n_okay is wrong
     return dist, mer
 
 
@@ -140,7 +171,8 @@ def perform_predictions_analysis(graph, predictions, truth, label_encoder, dict=
             else:
                 dict[key][0] += 1
         else:
-            print("Warning: Error in the prediction analysis, ignore warning if using undirected edges")
+            pass
+            # print("Warning: Error in the prediction analysis, ignore warning if using undirected edges")
     return dict
 
 

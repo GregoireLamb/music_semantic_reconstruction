@@ -30,13 +30,17 @@ class DatasetHandler(Dataset):
         self.position_as_bounding_box = self.config.__getitem__("position_as_bounding_box")
 
         self.data_root_dict = {"muscima-pp": "./data/muscima-pp/v2.1/data/",
+                               "muscima_measure_cut": "./data/muscima-pp/measure_cut/data/",
                                "doremi": "./data/DoReMi_v1/",
+                               "doremi_measure_cut": "./data/DoReMi_v1/measure_cut/",
                                "musigraph": "./data/MUSIGRAPH/",
                                "musigraph_small": "./data/MUSIGRAPH_small/",
                                }
 
         self.xml_file_folder = {"muscima-pp": "annotations/",
+                                "muscima_measure_cut": "annotations/",
                                 "doremi": "Parsed_by_page_omr_xml/",
+                                "doremi_measure_cut": "Parsed_by_measure_omr_xml/",
                                 "musigraph": "xml/",
                                 "musigraph_small": "xml/",
                                 }
@@ -150,7 +154,7 @@ class DatasetHandler(Dataset):
         :param nodes_list: list of nodes_list
         :return: list of filtered and renamed nodes_list
         """
-        if self.dataset not in ['muscima-pp', 'doremi', 'musigraph']:
+        if self.dataset not in ['muscima-pp', 'doremi', 'musigraph', 'muscima_measure_cut']:
             print("Warning: filter_and_rename_nodes_list only implemented for DOREMI and muscima-pp dataset")
 
         nodes_list_tmp = []
@@ -164,11 +168,12 @@ class DatasetHandler(Dataset):
         score_name = self.raw_file_names[score]
         img = None
 
-        if self.dataset == 'muscima-pp':
+        if self.dataset == 'muscima-pp' or self.dataset == 'muscima_measure_cut':
             path = os.path.abspath(self.data_root + '../images/fulls/')
             img = plt.imread(f"{path}/{score_name.rsplit('.xml', 1)[0]}.png")
-            img = 1 - img
-            img = np.stack((img,) * 3, axis=-1)
+            if self.dataset == 'muscima-pp':
+                img = 1 - img
+                img = np.stack((img,) * 3, axis=-1)
         elif self.dataset == 'doremi':
             part1 = re.search(r'_(.*?)-layout', score_name).group(1)
             page_number = re.search(r'Page_(\d+)', score_name).group(1)
@@ -177,6 +182,9 @@ class DatasetHandler(Dataset):
             img = plt.imread(f"{self.data_root}images/{name_img}.png")
         elif self.dataset.startswith('musigrap'):
             img = plt.imread(f"{self.data_root}images/{score_name.rsplit('.xml', 1)[0]}.png")
+        elif self.dataset == 'doremi_measure_cut':
+            img = plt.imread(f"{self.data_root}Images/{score_name.rsplit('.xml', 1)[0]}.png")
+
         else:
             print(f"No implementation found to display score for {self.dataset}.")
 

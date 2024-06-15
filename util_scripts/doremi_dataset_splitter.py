@@ -2,8 +2,8 @@ import os
 import random
 import numpy as np
 
-xml_dir=r'../data/DoReMi_v1/Parsed_by_page_omr_xml/'
-output_path = '../data/DoReMi_v1/'
+xml_dir=r'./data/DoReMi_v1/Parsed_by_page_omr_xml/'
+output_path = './data/DoReMi_v1/'
 train_ratio=0.7
 val_ratio=0.15
 

@@ -45,12 +45,12 @@ class KNNGraphContainer:
         """
         Instantiate the graph object with the truth and the original edges
         """
-        n_neighbors = self.config.__getitem__('n_neighbors_KNN')
-        labels_to_use = self.config.__getitem__('labels_to_use')
-        normalize_positions = self.config.__getitem__('normalize_positions')
-        prefilter_KNN = self.config.__getitem__('prefilter_KNN')
-        position_as_bounding_box = self.config.__getitem__('position_as_bounding_box')
-        # mono_filtering = self.config.__getitem__('mono_filtering') #TODO what to do with it ?
+        n_neighbors = self.config['n_neighbors_KNN']
+        labels_to_use = self.config['labels_to_use']
+        normalize_positions = self.config['normalize_positions']
+        prefilter_KNN = self.config['prefilter_KNN']
+        position_as_bounding_box = self.config['position_as_bounding_box']
+        # mono_filtering = self.config['mono_filtering'] #TODO what to do with it ?
 
         processing_folder = (f'{self.root}KNNGraphContainers/'
                              f'{labels_to_use}/n_neighbors_{n_neighbors}/'
@@ -100,12 +100,13 @@ class KNNGraphContainer:
             if not os.path.isdir(f'{processing_folder}/'):
                 folders_list = processing_folder.split('/')
                 for i in range(1, len(folders_list)):
-                    processing_folder = '/'.join(folders_list[:i + 1])
-                    if not os.path.isdir(processing_folder):
-                        os.mkdir(f'{processing_folder}')
+                    folder2create = '/'.join(folders_list[:i + 1])
+                    if not os.path.isdir(folder2create):
+                        os.mkdir(f'{folder2create}')
 
             # save the graph
-            torch.save(self.graph, f'{processing_folder}/KNNGraphContainer_{self.index}.pt')
+            save_path = os.path.abspath(f'{processing_folder}')
+            torch.save(self.graph, f"{save_path}KNNGraphContainer_{self.index}.pt")
 
     #     if hetero_data:
     #         self.make_hetero_data()
@@ -133,11 +134,14 @@ class KNNGraphContainer:
         Load the edges that are allowed in the graph
         """
         edges = set()
-        if os.path.isdir(os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))):
-            path = os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))
-        else:
-            path = os.path.abspath(os.path.join(self.root, "../labels_and_links/")) #TODO warning depends on the dataset
-        with open(f"{path}/{self.config.__getitem__('labels_to_use')}_links.txt", "r") as f:
+        # [Modified 14/06] : stupid thig was done here ?
+        # warning depends on the dataset store depth param in the dataset instead ?
+        # if os.path.isdir(os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))):
+        #     path = os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))
+        # else:
+        #     path = os.path.abspath(os.path.join(self.root, "../labels_and_links/"))
+        path = os.path.abspath("./data/labels_and_links/")
+        with open(f"{path}/{self.config['labels_to_use']}_links.txt", "r") as f:
             for line in f:
                 edges.add(line.strip())
         return edges
