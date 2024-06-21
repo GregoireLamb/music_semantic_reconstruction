@@ -1,5 +1,9 @@
 import os.path
+import sys
 from datetime import datetime
+
+# Add the parent directory to the system path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import torch
 import torch_geometric.transforms as T
