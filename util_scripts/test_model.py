@@ -92,10 +92,14 @@ def visu_results(file_path='./util_scripts/results/test_results.csv', output_pat
 
     df = pd.DataFrame(data).T
 
+    # filter df if edit_distance is above 50
+    df = df[df['edit_distance'].astype(float) < 50]
+
     # Visualize the results global metrics
     for metric in ['accuracy', 'edit_distance', 'music_error_rate']:
         df[metric] = df[metric].astype(float)
         order = df.groupby('test_type')[metric].max().sort_values(ascending=False).index
+
 
         # Create a box plot with the ordered test types
         plt.figure(figsize=(10, 6))
@@ -108,10 +112,15 @@ def visu_results(file_path='./util_scripts/results/test_results.csv', output_pat
         plt.savefig(output_path + f'{metric}.png')
         plt.close()
 
+    # filter df by columns stating with notehead
+    df_notehead = df[df.columns[pd.Series(df.columns).str.startswith('notehead')]]
+    # print the max of each column with its index
+    print(df_notehead)
+
 
 seed_everything_(42)
 
 # for model in os.listdir('./models'):
-# if model.startswith('789'):
-#     mono_model_testing(f'./models/{model}', save_results=True)
+#     if model.startswith('deep_search_B_'):
+#         mono_model_testing(f'./models/{model}', save_results=True)
 visu_results()

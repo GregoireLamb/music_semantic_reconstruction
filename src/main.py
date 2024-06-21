@@ -225,36 +225,65 @@ def save_model(config: Config, train_results: dict, run_name: str, accuracy, edi
         msg = run_name + ',' + ','.join([str(value) for value in config.values()]) + ',' + str(accuracy)+',' + str(edit_distance)+',' + str(mer)+ '\n'
         file.write(msg)
 
-def main(config_path="./config.yml"):
+def main(config_path="./config.yml", deep_search=False):
+    if deep_search:
+        round = 0
+        round_try = 0
+        round_best_loss = np.inf
+        round_best_model = None
+
     config = Config(path=config_path)
-    seed_everything_(config['seed'])
-    run_name = config_path.split('/')[-1].split('.')[0] + "_" + datetime.now().strftime('%m-%d-%Y_%H-%M')
-    writer = SummaryWriter('./runs/' + run_name)
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    loader = Loader(config, device)
 
-    dataset = DatasetHandler(config)
-    loader.load(dataset)
+    while True:
+        seed_everything_(config['seed'])
+        run_name = config_path.split('/')[-1].split('.')[0] + "_" + datetime.now().strftime('%m-%d-%Y_%H-%M')
+        writer = SummaryWriter('./runs/' + run_name)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        loader = Loader(config, device)
 
-    train_results, best_model = train(config=config,
-                                      writer=writer,
-                                      loader=loader,
-                                      device=device,
-                                      model_to_load=config['load_model'])
+        dataset = DatasetHandler(config)
+        loader.load(dataset)
 
-    print("Best model is reached at epoch: ", train_results['best_epoch'])
+        train_results, best_model = train(config=config,
+                                          writer=writer,
+                                          loader=loader,
+                                          device=device,
+                                          model_to_load=config['load_model'])
 
-    accuracy, edit_distance, mer, link_analyse_dict = test(best_model, device, loader, writer, config)
+        print("Best model is reached at epoch: ", train_results['best_epoch'])
 
-    save_model(config, train_results, run_name, accuracy, edit_distance, mer)
+        accuracy, edit_distance, mer, link_analyse_dict = test(best_model, device, loader, writer, config)
 
-    writer.flush()
-    writer.close()
+        save_model(config, train_results, run_name, accuracy, edit_distance, mer)
+
+        writer.flush()
+        writer.close()
+
+        if not deep_search:
+            return
+
+        if deep_search:
+            if round_best_loss > train_results['best_validation_loss']:
+                round_best_loss = train_results['best_validation_loss']
+                round_best_model = './models/' + run_name + '.pth'
+
+            round_try += 1
+            if round_try >= 3:
+                round += 1
+                round_try = 0
+                config['load_model'] = round_best_model
+                config['start_from_best_model'] = True
+
+            if round >= 12:
+                print("Deep search is done")
+                return
+
+            print("Deep search round ", round, " try ", round_try)
+
 
 if __name__ == '__main__':
     configs = os.listdir('./waiting_list')
     for file in configs:
         config_path = f'./waiting_list/{file}'
-        main(config_path=config_path)
-        break
+        main(config_path=config_path, deep_search=True)
 

@@ -2,7 +2,7 @@ import os
 
 from matplotlib import pyplot as plt
 
-img_path = './data/muscima-pp/measure_cut/images/fulls'
+img_path = './data/DoReMi_v1/measure_cut/Images/'
 max_h, max_w = 0, 0
 
 for image in os.listdir(img_path):

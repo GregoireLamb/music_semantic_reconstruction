@@ -2,6 +2,7 @@ import copy
 import os
 import xml.etree.ElementTree as ET
 from random import random
+import re
 
 import cv2
 import numpy as np
@@ -338,11 +339,23 @@ else:
 list_score_xml_path = [os.path.join(xml_dir, filename) for filename in os.listdir(xml_dir) if filename.endswith('.xml')]
 list_score_img_path = [os.path.join(img_dir, filename) for filename in os.listdir(img_dir) if filename.endswith('.png')]
 
+pairs_xml_img = zip(list_score_xml_path, list_score_img_path)
 
 count_measure = 0
 meet = False
 print('Total score to cut: ', len(list_score_xml_path))
-for xml_path, image_path in (pbar := tqdm(zip(list_score_xml_path, list_score_img_path))):
+pairs_xml_img = []
+for xml in list_score_xml_path.copy():
+    part1 = re.search(r'_(.*?)-layout', xml.split('/')[-1]).group(1)
+    part1 = part1.replace('Parsed_', '')
+    page_number = re.search(r'Page_(\d+)', xml.split('/')[-1]).group(1)
+    formatted_page_number = f"{int(page_number):03}"
+    name_img = f"{part1}-{formatted_page_number}"
+    img_path = os.path.join(img_dir, f"{name_img}.png")
+    assert img_path in list_score_img_path, f"Image {img_path} not found"
+    pairs_xml_img.append((xml, img_path))
+
+for xml_path, image_path in (pbar := tqdm(pairs_xml_img)):
     pbar.set_description(f"Cutting measure ")
     cut_measures(img_score_path=image_path, xml_path=xml_path, output_path=output_path)
     count_measure += 1

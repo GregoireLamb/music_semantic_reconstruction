@@ -106,7 +106,7 @@ class KNNGraphContainer:
 
             # save the graph
             save_path = os.path.abspath(f'{processing_folder}')
-            torch.save(self.graph, f"{save_path}KNNGraphContainer_{self.index}.pt")
+            torch.save(self.graph, f"{save_path}/KNNGraphContainer_{self.index}.pt")
 
     #     if hetero_data:
     #         self.make_hetero_data()

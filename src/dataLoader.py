@@ -24,7 +24,7 @@ class Loader:
         self.normalisation_scale = {"muscima-pp": (3403., 2354.5),
                                     "muscima_measure_cut": (2132, 3157), # some measure are almost a full page
                                     "doremi": (2292.5, 1806.5),
-                                    "doremi_measure_cut": (2292.5, 1806.5), #TODO
+                                    "doremi_measure_cut": (1897., 1371.5),
                                     "musigraph": (2354.5, 310.0),
                                     "musigraph_small": (2354.5, 310.0),
                                     }

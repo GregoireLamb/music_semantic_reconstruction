@@ -154,7 +154,7 @@ class DatasetHandler(Dataset):
         :param nodes_list: list of nodes_list
         :return: list of filtered and renamed nodes_list
         """
-        if self.dataset not in ['muscima-pp', 'doremi', 'musigraph', 'muscima_measure_cut']:
+        if self.dataset not in ['muscima-pp', 'doremi', 'musigraph', 'muscima_measure_cut', 'doremi_measure_cut']:
             print("Warning: filter_and_rename_nodes_list only implemented for DOREMI and muscima-pp dataset")
 
         nodes_list_tmp = []
