@@ -46,9 +46,10 @@ class Loader:
         n_neighbors_KNN = self.config['n_neighbors_KNN']
         prefilter_KNN = "prefilter" if self.config['prefilter_KNN'] else "no_prefilter"
         normalize_positions = "normalized" if self.config['normalize_positions'] else "not_normalized"
+        directed = "undirected" if self.config['undirected_edges'] else "directed"
 
         file_name = (f'data_loader_{dataset_name}_{labels_to_use}_{position_as_bounding_box}_{n_neighbors_KNN}_'
-                     f'{prefilter_KNN}_{normalize_positions}.pt')
+                     f'{prefilter_KNN}_{normalize_positions}_{directed}.pt')
 
         file_pat = os.path.abspath(os.path.join(self.root, f'./data/loader_snapshot/{file_name}'))
         if os.path.isfile(file_pat):  # load the preprocessed data if it exists
