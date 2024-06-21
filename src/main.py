@@ -252,9 +252,10 @@ def main(config_path="./config.yml", deep_search=False):
 
         print("Best model is reached at epoch: ", train_results['best_epoch'])
 
-        accuracy, edit_distance, mer, link_analyse_dict = test(best_model, device, loader, writer, config)
+        if train_results['best_epoch'] != -1:
+            accuracy, edit_distance, mer, link_analyse_dict = test(best_model, device, loader, writer, config)
 
-        save_model(config, train_results, run_name, accuracy, edit_distance, mer)
+            save_model(config, train_results, run_name, accuracy, edit_distance, mer)
 
         writer.flush()
         writer.close()
