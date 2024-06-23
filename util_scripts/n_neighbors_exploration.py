@@ -43,6 +43,7 @@ for dataset_name in dataset_names:
         count_edges_in_knn = 0
         count_covered_edges = 0
         count_objects = 0
+        count_node_mer_dict = {}
         # link_type_count = {}
         # label_encoder = datasetHandler.label_encoder
 
@@ -56,21 +57,15 @@ for dataset_name in dataset_names:
             count_objects += int(graph.x.size()[0])
 
             ged, mer = compute_ged_mer_for_batch(graph, predictions, truth, config)
+
+            for i, g in graph.to_data_list():
+                if g.x.size()[0] not in count_node_mer_dict:
+                    count_node_mer_dict[g.x.size()[0]] = []
+                count_node_mer_dict[g.x.size()[0]].extend(ged[i])
+
             edit_distances.extend(ged)
             music_error_rate.extend(mer)
-
-            # for i in range(len(truth)):
-            #     if truth[i] == 1:
-            #         id = graph.edge_index[0][i].item()
-            #         index = graph.x[id][:-4].argmax()
-            #         label= label_encoder.inverse_transform([index.item()])[0]
-            #         key = (f'{label} - '
-            #                f'{label_encoder.inverse_transform([graph.x[graph.edge_index[1][i].item()][:-4].argmax().item()])[0]}')
-            #         if key not in link_type_count:
-            #             link_type_count[key] = 0
-            #         link_type_count[key] += 1
-
-
+        count_node_mer_dict = {k: np.mean(v) for k, v in count_node_mer_dict.items()}
 
 
         print("Average graph edit distance: ", np.mean(edit_distances))
@@ -84,4 +79,4 @@ for dataset_name in dataset_names:
         else:
             with open(output_path + 'n_neigbhors_exploration.csv', "w") as file:
                 file.write(f'dataset_name,n_value,graph_edit_distances,music_error_rate,count_covered_edges,count_edges_in_knn,count_objects,granularity\n')
-                file.write(f'{dataset_name},{n_value},{np.mean(edit_distances)},{np.mean(music_error_rate)},{count_covered_edges},{count_edges_in_knn},{count_objects},{label_to_use}')
+                file.write(f'{dataset_name},{n_value},{np.mean(edit_distances)},{np.mean(music_error_rate)},{count_covered_edges},{count_edges_in_knn},{count_objects},{label_to_use}, {count_node_mer_dict}')
