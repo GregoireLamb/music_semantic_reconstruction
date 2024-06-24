@@ -57,7 +57,7 @@ for dataset_name in dataset_names:
                 b += g.edge_index.size()[1]
                 if g.x.size()[0] not in count_node_ged_dict:
                     count_node_ged_dict[g.x.size()[0]] = []
-                count_node_ged_dict[g.x.size()[0]].append(int(np.sum(truth[a:b])))
+                count_node_ged_dict[g.x.size()[0]].append(np.sum(truth[a:b]/g.original_edges_in.size()[0] if np.sum(truth[a:b]) > 0 else 0))
                 a = b
 
         count_node_ged_dict = {k: np.mean(v) for k, v in count_node_ged_dict.items()}
