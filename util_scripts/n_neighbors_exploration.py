@@ -54,7 +54,7 @@ for dataset_name in dataset_names:
 
             a, b = 0, 0
             for i, g in enumerate(graph.to_data_list()):
-                b += 0, g.edge_index.size()[1]
+                b += g.edge_index.size()[1]
                 if g.x.size()[0] not in count_node_ged_dict:
                     count_node_ged_dict[g.x.size()[0]] = []
                 count_node_ged_dict[g.x.size()[0]].append(np.sum(truth[a:b]))
