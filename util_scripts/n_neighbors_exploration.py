@@ -24,10 +24,12 @@ dataset_names = ['musigraph']
 label_to_use = '10_labels'
 datasetHandler_list = []
 config = Config()
-n_values = [5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+n_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 config['labels_to_use'] = label_to_use
+config['undirected_edges'] = False
+config['prefilter_KNN'] = True
 for dataset_name in dataset_names:
     config['dataset'] = dataset_name
     for n_value in n_values:
@@ -62,7 +64,7 @@ for dataset_name in dataset_names:
 
         count_node_ged_dict = {k: np.mean(v) for k, v in count_node_ged_dict.items()}
         count_node_ged_df = pd.DataFrame(list(count_node_ged_dict.items()), columns=['n', 'avg_GED'])
-        count_node_ged_df = count_node_ged_df.sort_values(by='n')
+        count_node_ged_df = count_node_ged_df.sort_values(by='n', ignore_index=True)
 
         # create file n_neigbhors_exploration if not exists and append edit dist
         if os.path.isfile(output_path + 'n_neigbhors_exploration.csv'):

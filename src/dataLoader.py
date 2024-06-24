@@ -48,17 +48,17 @@ class Loader:
         normalize_positions = "normalized" if self.config['normalize_positions'] else "not_normalized"
         directed = "undirected" if self.config['undirected_edges'] else "directed"
 
-        file_name = (f'data_loader_{dataset_name}_{labels_to_use}_{position_as_bounding_box}_{n_neighbors_KNN}_'
+        self.file_name = (f'data_loader_{dataset_name}_{labels_to_use}_{position_as_bounding_box}_{n_neighbors_KNN}_'
                      f'{prefilter_KNN}_{normalize_positions}_{directed}.pt')
 
-        file_pat = os.path.abspath(os.path.join(self.root, f'./data/loader_snapshot/{file_name}'))
-        if os.path.isfile(file_pat):  # load the preprocessed data if it exists
+        file_path = os.path.abspath(os.path.join(self.root, f'./data/loader_snapshot/{self.file_name}'))
+        if os.path.isfile(file_path):  # load the preprocessed data if it exists
             print("Snapchot for loader found, loading ...")
-            self.data = torch.load(f'{self.root}./data/loader_snapshot/{file_name}')
+            self.data = torch.load(f'{self.root}./data/loader_snapshot/{self.file_name}')
             self.set_default_train_val_test_split(self.config['dataset'])
             return
         else:
-            print(f"No snapshot found in {file_pat}")
+            print(f"No snapshot found in {file_path}")
 
         for score in (pbar := tqdm(range(len(self.datasetHandler)))):
             pbar.set_description(f"Processing dataset")
@@ -73,12 +73,12 @@ class Loader:
             index += 1
 
         # save self.data in a file for future use
-        torch.save(self.data, f'{self.root}./data/loader_snapshot/{file_name}')
+        torch.save(self.data, f'{self.root}./data/loader_snapshot/{self.file_name}')
         self.set_default_train_val_test_split(dataset_name)
 
     def set_default_train_val_test_split(self, dataset_name: str):
         # Load a snapshot of the split if exists
-        snapshot_file = f'{self.root}./data/loader_snapshot/{dataset_name}_split_train_cal_test.pt'
+        snapshot_file = f'{self.root}./data/loader_snapshot/{dataset_name}_split_train_cal_test_{self.file_name}.pt'
         if os.path.isfile(snapshot_file):
             all_split = torch.load(snapshot_file)
             self.train_scores, self.validation_scores, self.test_scores = all_split
@@ -106,25 +106,6 @@ class Loader:
             validation_ids = self.read_ids_file(f'{split_location}/validation.ids')
             test_ids = self.read_ids_file(f'{split_location}/test.ids')
 
-        # elif dataset_name == "muscima_measure":
-        #     train_ids = self.read_ids_file(f'{self.root}./data/MUSCIMA_measure/train_manual.ids')
-        #     validation_ids = self.read_ids_file(f'{self.root}./data/MUSCIMA_measure/validation_manual.ids')
-        #     test_ids = self.read_ids_file(f'{self.root}./data/MUSCIMA_measure/test_manual.ids')
-        #
-        #     self.train_scores = []
-        #     self.validation_scores = []
-        #     self.test_scores = []
-        #
-        #     for list, set in [(self.train_scores, train_ids),
-        #                       (self.validation_scores, validation_ids),
-        #                       (self.test_scores, test_ids)]:
-        #         for score_name in self.datasetHandler.raw_file_names:
-        #             for large_score_name in set:
-        #                 if score_name.startswith(large_score_name[:-4]):  # remove the .xml
-        #                     list.append(self.datasetHandler.raw_file_names.index(score_name))
-        #
-        #     all_split = [self.train_scores, self.validation_scores, self.test_scores]
-        #     torch.save(all_split, f'{self.root}/data/loader_data/muscima_measure_split_train_val_test.pt')
 
         self.train_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in train_ids]
         self.validation_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in validation_ids]
