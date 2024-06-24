@@ -24,7 +24,7 @@ dataset_names = ['musigraph']
 label_to_use = '10_labels'
 datasetHandler_list = []
 config = Config()
-n_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+n_values = [5, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 config['labels_to_use'] = label_to_use
@@ -57,21 +57,21 @@ for dataset_name in dataset_names:
                 b += g.edge_index.size()[1]
                 if g.x.size()[0] not in count_node_ged_dict:
                     count_node_ged_dict[g.x.size()[0]] = []
-                count_node_ged_dict[g.x.size()[0]].append(np.sum(truth[a:b]))
+                count_node_ged_dict[g.x.size()[0]].append(int(np.sum(truth[a:b])))
                 a = b
 
-            count_node_ged_dict = {k: np.mean(v) for k, v in count_node_ged_dict.items()}
-            count_node_ged_df = pd.DataFrame(list(count_node_ged_dict.items()), columns=['n', 'avg_GED'])
-            count_node_ged_df = count_node_ged_df.sort_values(by='n')
+        count_node_ged_dict = {k: np.mean(v) for k, v in count_node_ged_dict.items()}
+        count_node_ged_df = pd.DataFrame(list(count_node_ged_dict.items()), columns=['n', 'avg_GED'])
+        count_node_ged_df = count_node_ged_df.sort_values(by='n')
 
-            # create file n_neigbhors_exploration if not exists and append edit dist
-            if os.path.isfile(output_path + 'n_neigbhors_exploration.csv'):
-                with open(output_path + 'n_neigbhors_exploration.csv', "a") as file:
-                    file.write(f'\n{dataset_name},{n_value},'
-                               f'{count_covered_edges},{count_edges_in_knn},{count_objects},{label_to_use},{count_node_ged_df}')
-            else:
-                with open(output_path + 'n_neigbhors_exploration.csv', "w") as file:
-                    file.write(
-                        f'dataset_name,n_value,count_covered_edges,count_edges_in_knn,count_objects,granularity, count_ged_per_node\n')
-                    file.write(
-                        f'{dataset_name},{n_value},{count_covered_edges},{count_edges_in_knn},{count_objects},{label_to_use}, {count_node_ged_df}')
+        # create file n_neigbhors_exploration if not exists and append edit dist
+        if os.path.isfile(output_path + 'n_neigbhors_exploration.csv'):
+            with open(output_path + 'n_neigbhors_exploration.csv', "a") as file:
+                file.write(f'\n{dataset_name},{n_value},'
+                           f'{count_covered_edges},{count_edges_in_knn},{count_objects},{label_to_use},{count_node_ged_df}')
+        else:
+            with open(output_path + 'n_neigbhors_exploration.csv', "w") as file:
+                file.write(
+                    f'dataset_name,n_value,count_covered_edges,count_edges_in_knn,count_objects,granularity, count_ged_per_node\n')
+                file.write(
+                    f'{dataset_name},{n_value},{count_covered_edges},{count_edges_in_knn},{count_objects},{label_to_use}, {count_node_ged_df}')
