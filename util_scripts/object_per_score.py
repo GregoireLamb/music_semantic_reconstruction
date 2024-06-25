@@ -59,7 +59,13 @@ for dataset_name in dataset_names:
 
     sns.set_theme(style="ticks")
     plot = sns.jointplot(data=expanded_df, x='number of nodes', y='number of links', kind='hist',
-                         color="#4CB391", marginal_ticks=True)
+                         color="#4CB391", marginal_ticks=True,
+                         xlim = (0, max_node+1),  # Set x-axis limits starting from 0
+                         ylim = (0, max_link+1),  # Set y-axis limits starting from 0
+                         marginal_kws = dict(
+                             binwidth = 1
+                            )
+                         )
 
     # save
     node_link_count_df = pd.DataFrame(node_link_count_dict.items(), columns=['(node, link)', 'count'])
