@@ -14,8 +14,8 @@ from tqdm import tqdm
 
 def visualize_score_with_obj(
         df: pd.DataFrame,
-        score_path=r'.\data\SMALL_MUSCIMA\data\images\fulls\CVC-MUSCIMA_W-01_N-10_D-ideal.png',
-        output_path='./labeld_img/img.png',
+        score_path,
+        output_path,
         dpi=300,
         measure_obj=False):
     """
@@ -322,7 +322,7 @@ def cut_measures(img_score_path: str, xml_path: str, output_path: str,
 
 
 # Input directory paths
-DATASET = 'doremi' # 'doremi' or 'muscima-pp'
+DATASET = 'muscima-pp' # 'doremi' or 'muscima-pp'
 
 if DATASET == 'muscima-pp':
     xml_dir = r'./data/muscima-pp/v2.1/data/annotations/'
@@ -339,21 +339,23 @@ else:
 list_score_xml_path = [os.path.join(xml_dir, filename) for filename in os.listdir(xml_dir) if filename.endswith('.xml')]
 list_score_img_path = [os.path.join(img_dir, filename) for filename in os.listdir(img_dir) if filename.endswith('.png')]
 
-pairs_xml_img = zip(list_score_xml_path, list_score_img_path)
 
 count_measure = 0
-meet = False
 print('Total score to cut: ', len(list_score_xml_path))
-pairs_xml_img = []
-for xml in list_score_xml_path.copy():
-    part1 = re.search(r'_(.*?)-layout', xml.split('/')[-1]).group(1)
-    part1 = part1.replace('Parsed_', '')
-    page_number = re.search(r'Page_(\d+)', xml.split('/')[-1]).group(1)
-    formatted_page_number = f"{int(page_number):03}"
-    name_img = f"{part1}-{formatted_page_number}"
-    img_path = os.path.join(img_dir, f"{name_img}.png")
-    assert img_path in list_score_img_path, f"Image {img_path} not found"
-    pairs_xml_img.append((xml, img_path))
+
+if DATASET == 'muscima-pp':
+    pairs_xml_img = zip(list_score_xml_path, list_score_img_path)
+elif DATASET == 'doremi':
+    pairs_xml_img = []
+    for xml in list_score_xml_path.copy():
+        part1 = re.search(r'_(.*?)-layout', xml.split('/')[-1]).group(1)
+        part1 = part1.replace('Parsed_', '')
+        page_number = re.search(r'Page_(\d+)', xml.split('/')[-1]).group(1)
+        formatted_page_number = f"{int(page_number):03}"
+        name_img = f"{part1}-{formatted_page_number}"
+        img_path = os.path.join(img_dir, f"{name_img}.png")
+        assert img_path in list_score_img_path, f"Image {img_path} not found"
+        pairs_xml_img.append((xml, img_path))
 
 for xml_path, image_path in (pbar := tqdm(pairs_xml_img)):
     pbar.set_description(f"Cutting measure ")
