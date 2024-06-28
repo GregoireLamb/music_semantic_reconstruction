@@ -280,7 +280,7 @@ def cut_measures(img_score_path: str, xml_path: str, output_path: str,
             save_path = f'{output_path}Images/{score_name}_measure_{measures_image_limit.index(img)}.png'
             image = cv2.imread(img_score_path, cv2.IMREAD_COLOR)
 
-        image = image[img[2]:img[3], img[0]:img[1]]
+        score_img = image[img[2]:img[3], img[0]:img[1]]
         w = abs(img[0] - img[1])
         h = abs(img[2] - img[3])
 
@@ -293,7 +293,7 @@ def cut_measures(img_score_path: str, xml_path: str, output_path: str,
         ax = plt.Axes(fig, [0., 0., 1., 1.])
         ax.set_axis_off()
         fig.add_axes(ax)
-        ax.imshow(image)
+        ax.imshow(score_img)
         fig.savefig(save_path, dpi=1)
         plt.close(fig)
 
