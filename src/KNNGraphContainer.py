@@ -105,8 +105,8 @@ class KNNGraphContainer:
                         os.mkdir(f'{folder2create}')
 
             # save the graph
-            save_path = os.path.abspath(f'{processing_folder}')
-            torch.save(self.graph, f"{save_path}/KNNGraphContainer_{self.index}.pt")
+            save_path = u"\\\\?\\" + os.path.abspath(f'{processing_folder}\KNNGraphContainer_{self.index}.pt')
+            torch.save(self.graph, save_path)
 
     #     if hetero_data:
     #         self.make_hetero_data()
