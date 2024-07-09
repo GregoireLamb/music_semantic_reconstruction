@@ -106,7 +106,7 @@ class KNNGraphContainer:
 
             # save the graph
             # save_path = u"\\\\?\\" + os.path.abspath(f'{processing_folder}\KNNGraphContainer_{self.index}.pt') # windows
-            save_path = u"\\\\?\\" + os.path.abspath(f'{processing_folder}\KNNGraphContainer_{self.index}.pt') # LInux
+            save_path = os.path.abspath(f'{processing_folder}\KNNGraphContainer_{self.index}.pt') # LInux
             torch.save(self.graph, save_path)
 
     def prefilter_KNNGraph(self, graph):
