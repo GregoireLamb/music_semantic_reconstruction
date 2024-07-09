@@ -105,11 +105,9 @@ class KNNGraphContainer:
                         os.mkdir(f'{folder2create}')
 
             # save the graph
-            save_path = u"\\\\?\\" + os.path.abspath(f'{processing_folder}\KNNGraphContainer_{self.index}.pt')
+            # save_path = u"\\\\?\\" + os.path.abspath(f'{processing_folder}\KNNGraphContainer_{self.index}.pt') # windows
+            save_path = u"\\\\?\\" + os.path.abspath(f'{processing_folder}\KNNGraphContainer_{self.index}.pt') # LInux
             torch.save(self.graph, save_path)
-
-    #     if hetero_data:
-    #         self.make_hetero_data()
 
     def prefilter_KNNGraph(self, graph):
         """"
@@ -134,70 +132,8 @@ class KNNGraphContainer:
         Load the edges that are allowed in the graph
         """
         edges = set()
-        # [Modified 14/06] : stupid thig was done here ?
-        # warning depends on the dataset store depth param in the dataset instead ?
-        # if os.path.isdir(os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))):
-        #     path = os.path.abspath(os.path.join(self.root, "../../../labels_and_links/"))
-        # else:
-        #     path = os.path.abspath(os.path.join(self.root, "../labels_and_links/"))
         path = os.path.abspath("./data/labels_and_links/")
         with open(f"{path}/{self.config['labels_to_use']}_links.txt", "r") as f:
             for line in f:
                 edges.add(line.strip())
         return edges
-
-    # def make_hetero_data(self):
-    #     hetero_graph = HeteroData()
-    #     corresp_id_hetero_id = {}  # PyG hetero W with id starting from 0 for each class
-    #
-    #     if self.graph.x.shape[0] == 0:
-    #         self.graph = hetero_graph
-    #         self.graph.validate()
-    #         return
-    #     label_id = {}
-    #     new_x = self.graph.x[:, -4:]  # Keep only the position (bounding box)
-    #     dict_x = {}
-    #
-    #     for i in range(len(self.graph.x)):
-    #         label = self.label_encoder.inverse_transform([np.where(self.graph.x[i] == 1)[0][0]])[0]
-    #         if label in dict_x:
-    #             dict_x[label].append(new_x[i].tolist())
-    #         else:
-    #             dict_x[label] = [new_x[i].tolist()]
-    #
-    #         if label not in label_id:
-    #             label_id[label] = 0
-    #         corresp_id_hetero_id[i] = label_id[label]
-    #         label_id[label] += 1
-    #
-    #     for k, v in dict_x.items():
-    #         hetero_graph[k].x = torch.Tensor(v)
-    #
-    #     dict_edge = {}
-    #
-    #     for i in range(self.graph.edge_index.shape[1]):
-    #         primitive1 = self.graph.edge_index[0][i].item()
-    #         primitive2 = self.graph.edge_index[1][i].item()
-    #         id1 = np.where(self.graph.x[primitive1] == 1)[0][0]
-    #         id2 = np.where(self.graph.x[primitive2] == 1)[0][0]
-    #         class1 = self.label_encoder.inverse_transform([id1])[0]
-    #         class2 = self.label_encoder.inverse_transform([id2])[0]
-    #
-    #         if class1 + "." + class2 not in dict_edge:
-    #             dict_edge[class1 + "." + class2] = ([], [])
-    #
-    #         dict_edge[class1 + "." + class2][0].append(corresp_id_hetero_id[self.graph.edge_index[0][i].item()])
-    #         dict_edge[class1 + "." + class2][1].append(corresp_id_hetero_id[self.graph.edge_index[1][i].item()])
-    #
-    #     for k, v in dict_edge.items():
-    #         k = k.split(".")
-    #         hetero_graph[k[0], "into", k[1]].edge_index = torch.Tensor(v)
-    #
-    #     hetero_graph.pos = self.graph.pos
-    #     hetero_graph.truth = self.graph.truth
-    #     hetero_graph.index = self.graph.index
-    #     hetero_graph.original_edges_in = self.graph.original_edges_in
-    #     hetero_graph.original_edges_out = self.graph.original_edges_out
-    #
-    #     self.graph = hetero_graph
-    #     self.graph.validate()

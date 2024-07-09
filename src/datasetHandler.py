@@ -155,9 +155,16 @@ class DatasetHandler(Dataset):
         :return: list of filtered and renamed nodes_list
         """
         if self.dataset not in ['muscima-pp', 'doremi', 'musigraph', 'muscima_measure_cut', 'doremi_measure_cut']:
-            print("Warning: filter_and_rename_nodes_list only implemented for DOREMI and muscima-pp dataset")
+            print(f"Warning: filter_and_rename_nodes_list only implemented for {['muscima-pp', 'doremi', 'musigraph', 'muscima_measure_cut', 'doremi_measure_cut']}")
 
         nodes_list_tmp = []
+
+        if self.label_transformer_dict.values() == ['primitive']: # mono label (experience 1)
+            for c in nodes_list:
+                c.set_class_name('primitive')
+                nodes_list_tmp.append(c)
+            return nodes_list_tmp
+
         for c in nodes_list:
             if c.class_name in self.label_transformer_dict:
                 c.set_class_name(self.label_transformer_dict[c.class_name])
@@ -182,9 +189,9 @@ class DatasetHandler(Dataset):
             img = plt.imread(f"{self.data_root}images/{name_img}.png")
         elif self.dataset.startswith('musigrap'):
             img = plt.imread(f"{self.data_root}images/{score_name.rsplit('.xml', 1)[0]}.png")
+            print(f"Getting musigraph image: \n {self.data_root}images/{score_name.rsplit('.xml', 1)[0]}.png")
         elif self.dataset == 'doremi_measure_cut':
             img = plt.imread(f"{self.data_root}Images/{score_name.rsplit('.xml', 1)[0]}.png")
-
         else:
             print(f"No implementation found to display score for {self.dataset}.")
 
