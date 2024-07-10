@@ -41,10 +41,10 @@ def save_test(test_result):
 def test_model(path_to_checkpoint: str, dataset_name="musigraph", save_results=False):
     checkpoint = torch.load(path_to_checkpoint)
     name = path_to_checkpoint.split("/")[-1].split(".")[0]
-    writer = SummaryWriter(log_dir=f"./util_scripts/results/runs/{name}_{datetime.now().strftime('%m-%d_%H-%M')}")
+    writer = SummaryWriter(log_dir=f"./util_scripts/results/runs/{name}")
 
-    path_to_config = './processed/' + path_to_checkpoint.split("/")[-1].split(".")[0][:-17] + '.yml'
-    config = Config(path=path_to_config)
+    # path_to_config = './processed/' + path_to_checkpoint.split("/")[-1].split(".")[0][:-17] + '.yml'
+    config = Config()
     if 'config' in checkpoint:
         config_param = checkpoint['config']
         # check if config_param is a dictionary
@@ -117,10 +117,10 @@ def visu_results(file_path='./util_scripts/results/test_results.csv', output_pat
 
 
 seed_everything_(42)
-models = os.listdir('./models')
+models = [m for m in os.listdir('./models/')]
 
 # filter the list
-models = models[-1]
+models = [models[-1]]
 
 for model in models:
     test_model(f'./models/{model}', save_results=True)
