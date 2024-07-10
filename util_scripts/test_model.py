@@ -38,7 +38,7 @@ def save_test(test_result):
         f.write(line + '\n')
 
 
-def mono_model_testing(path_to_checkpoint: str, dataset_name="musigraph", save_results=False):
+def test_model(path_to_checkpoint: str, dataset_name="musigraph", save_results=False):
     checkpoint = torch.load(path_to_checkpoint)
     name = path_to_checkpoint.split("/")[-1].split(".")[0]
     writer = SummaryWriter(log_dir=f"./util_scripts/results/runs/{name}_{datetime.now().strftime('%m-%d_%H-%M')}")
@@ -69,8 +69,6 @@ def mono_model_testing(path_to_checkpoint: str, dataset_name="musigraph", save_r
     test_result["music_error_rate"] = music_error_rate
     test_result["model"] = path_to_checkpoint.split("/")[-1].split(".")[0]
     model_type = path_to_checkpoint.split("/")[-1].split(".")[0][:-17]
-    if model_type.endswith('2') or model_type.endswith('3'):
-        model_type = model_type[:-1]
     test_result["test_type"] = model_type
 
     if save_results:
@@ -119,8 +117,11 @@ def visu_results(file_path='./util_scripts/results/test_results.csv', output_pat
 
 
 seed_everything_(42)
+models = os.listdir('./models')
 
-# for model in os.listdir('./models'):
-#     if model.startswith('deep_search_B_'):
-#         mono_model_testing(f'./models/{model}', save_results=True)
-visu_results()
+# filter the list
+models = models[-1]
+
+for model in models:
+    test_model(f'./models/{model}', save_results=True)
+# visu_results()

@@ -159,7 +159,7 @@ class DatasetHandler(Dataset):
 
         nodes_list_tmp = []
 
-        if self.label_transformer_dict.values() == ['primitive']: # mono label (experience 1)
+        if self.label_transformer_dict.get('primitive', None) == 'primitive': # mono label (experience 1)
             for c in nodes_list:
                 c.set_class_name('primitive')
                 nodes_list_tmp.append(c)

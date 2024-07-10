@@ -114,27 +114,11 @@ def compute_ged_mer_for_batch(graph, predictions, truth, config):
     """
     i, j = 0, 0
     dist, mer = [], []
-
-    # len_edge = 0
-    # for g in graph.to_data_list():
-    #     len_edge += g.edge_index.shape[1]
-
-    # print("all len edge", len_edge, "len graph ", graph.edge_index.shape[1])
-
     for g in graph.to_data_list():
         n_edges = g.edge_index.shape[1]
         i = j
-
-        # if config['undirected_edges']:
-        #     n_edges = g.edge_index.shape[1] * 2  # TODO Unexpected behavior of ToUndirected and dataLoader
-        #     g.edge_index = graph.edge_index[:, i:n_edges]
-        # print('nedge - i', n_edges, i, n_edges - i)
-
         j = i + n_edges
-        # print('nedges ', n_edges, 'took : ', j-i ,"out of ", graph.edge_index.shape[1])
-        pred = predictions[i:j]
-        true = truth[i:j]
-        d, m = compute_ged_mer_for_graph(g, pred, true, config)
+        d, m = compute_ged_mer_for_graph(g, predictions[i:j], truth[i:j], config)
         dist.append(d)
 
         if m != -1:  # if the graph has no edges but there is a false positive
