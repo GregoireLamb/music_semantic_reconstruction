@@ -29,9 +29,10 @@ class Loader:
                                     "musigraph_small": (2354.5, 310.0),
                                     }
 
-        self.scale = 1,1
+
+        self.scale = (1,1)
         if config['normalize_positions']:
-            self.normalisation_scale[config['dataset']]
+            self.scale = self.normalisation_scale[config['dataset']]
 
     def load(self, datasetHandler: DatasetHandler) -> None:
         """
