@@ -1,9 +1,9 @@
 import os
 import sys
-from datetime import datetime
 
 import pandas as pd
 import seaborn as sns
+import yaml
 from matplotlib import pyplot as plt
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -43,14 +43,13 @@ def test_model(path_to_checkpoint: str, dataset_name="musigraph", save_results=F
     name = path_to_checkpoint.split("/")[-1].split(".")[0]
     writer = SummaryWriter(log_dir=f"./util_scripts/results/runs/{name}")
 
-    # path_to_config = './processed/' + path_to_checkpoint.split("/")[-1].split(".")[0][:-17] + '.yml'
     config = Config()
     if 'config' in checkpoint:
         config_param = checkpoint['config']
-        # check if config_param is a dictionary
-        if isinstance(config_param, dict):
-            for key, value in config_param.items():
-                config[key] = value
+        config_param = yaml.safe_load(config_param)
+
+        for key, value in config_param.items():
+            config[key] = value
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Use GPU if available
     loader = Loader(config=config, device=device)
@@ -97,7 +96,6 @@ def visu_results(file_path='./util_scripts/results/test_results.csv', output_pat
     for metric in ['accuracy', 'edit_distance', 'music_error_rate']:
         df[metric] = df[metric].astype(float)
         order = df.groupby('test_type')[metric].max().sort_values(ascending=False).index
-
 
         # Create a box plot with the ordered test types
         plt.figure(figsize=(10, 6))
