@@ -160,12 +160,11 @@ def perform_predictions_analysis(graph, predictions, truth, label_encoder, dict=
     return dict
 
 
-def generate_visualizations(graph, predictions, writer: SummaryWriter, score_img, loader: DataLoader, dataset: str):
+def generate_visualizations(graph, predictions, writer: SummaryWriter, score_img, truth, loader: DataLoader):
     """
     Generate 3 image of the scores "True positive", "False Positive", "False Negative"
     the corresponding edges are displayed on the image
     """
-    truth = graph.truth.cpu()
     correctly_positively_labeled_mask = (truth == 1) & (predictions == 1)
     false_positive_mask = (truth == 0) & (predictions == 1)
     false_negative_mask = (truth == 1) & (predictions == 0)

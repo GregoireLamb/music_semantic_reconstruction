@@ -118,7 +118,7 @@ seed_everything_(42)
 models = [m for m in os.listdir('./models/')]
 
 # filter the list
-models = [models[-1]]
+models = [models[0]]
 
 for model in models:
     test_model(f'./models/{model}', save_results=True)

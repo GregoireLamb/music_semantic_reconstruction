@@ -171,8 +171,7 @@ def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWrit
             predictions_first_score = predictions[0:n_edges]
             truth_first_score = truth[0:n_edges]
 
-            generate_visualizations(first_score, predictions_first_score, writer, score_image, truth_first_score,
-                                    loader=loader)
+            generate_visualizations(first_score, predictions_first_score, writer, score_image, truth_first_score,loader=loader)
             do_visualize_first_score = False
 
         conf = confusion_matrix(truth, predictions)
