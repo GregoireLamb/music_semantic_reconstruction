@@ -166,11 +166,12 @@ def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWrit
 
         if do_visualize_first_score:
             first_score = graph.to_data_list()[0]
-            n_edges = first_score.edge_index.shape[1]
             score_image = loader.datasetHandler.get_score_image(first_score.index)
+            n_edges = first_score.edge_index.shape[1]
             predictions_first_score = predictions[0:n_edges]
+            truth_first_score = truth[0:n_edges]
 
-            generate_visualizations(first_score, predictions_first_score, writer, score_image,
+            generate_visualizations(first_score, predictions_first_score, writer, score_image, truth_first_score,
                                     loader=loader, dataset=config['dataset'])
             do_visualize_first_score = False
 
