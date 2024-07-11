@@ -169,7 +169,7 @@ def generate_visualizations(graph, predictions, writer: SummaryWriter, score_img
     false_positive_mask = (truth == 0) & (predictions == 1)
     false_negative_mask = (truth == 1) & (predictions == 0)
 
-    masks = [correctly_positively_labeled_mask.bool(), false_positive_mask.bool(), false_negative_mask.bool()]
+    masks = [correctly_positively_labeled_mask, false_positive_mask, false_negative_mask]
     names = ["True positive", "False Positive", "False Negative"]
     colors = ["green", "red", "blue"]
 
