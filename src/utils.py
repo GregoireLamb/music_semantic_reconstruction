@@ -183,7 +183,7 @@ def visualize_one_graph(graph, mask, name, score_img, writer: SummaryWriter, pos
         Visualize one graph with the edges selected by the mask and save it
         """
         fig, ax = plt.subplots(figsize=(7.5, 7.5), dpi=175)
-        ax.imshow(score_img)  # what s needed for the other dataset (white background)
+        ax.imshow(score_img)
 
         graph = copy.deepcopy(graph).cpu()
         graph.edge_index = graph.edge_index[:, mask]
