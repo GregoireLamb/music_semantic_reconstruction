@@ -128,6 +128,7 @@ def validate(loader: Loader, model: Model, device: torch.device, loss_function: 
     data_loader = loader.get_dataLoader(split="validation")
     for graph_validation_batch in data_loader:
         if config['undirected_edges']:
+            graph_validation_batch.to(device)
             graph_validation_batch = T.Compose([T.ToUndirected()])(graph_validation_batch)
         predictions = model(x=graph_validation_batch.x, pos=graph_validation_batch.pos,
                             edge_index=graph_validation_batch.edge_index)

@@ -174,10 +174,10 @@ def generate_visualizations(graph, predictions, writer: SummaryWriter, score_img
     colors = ["green", "red", "blue"]
 
     for mask, name, color in zip(masks, names, colors):
-        visualize_one_graph(graph, mask, name, score_img, writer, pos_scale=loader.scale, color=color)
+        visualize_one_graph(graph, mask, name, score_img, writer, color=color)
 
 
-def visualize_one_graph(graph, mask, name, score_img, writer: SummaryWriter, pos_scale: tuple, color: str):
+def visualize_one_graph(graph, mask, name, score_img, writer: SummaryWriter, color: str):
         """
         Visualize one graph with the edges selected by the mask and save it
         """
@@ -187,7 +187,8 @@ def visualize_one_graph(graph, mask, name, score_img, writer: SummaryWriter, pos
         graph = copy.deepcopy(graph).cpu()
         graph.edge_index = graph.edge_index[:, mask]
         pos = graph.pos.numpy()
-        pos = np.array(pos) * np.array(pos_scale[0:2]) + np.array(pos_scale[2:4])
+        pos_scale = np.array([sc.item() for sc in graph.scale])
+        pos = pos * pos_scale[0:2] + pos_scale[2:4]
 
         graph = to_networkx(graph)
 

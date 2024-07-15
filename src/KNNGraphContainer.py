@@ -72,30 +72,34 @@ class KNNGraphContainer:
 
             if normalize_positions:
                 if self.graph.x.shape[0] > 0:  # skip case where score doesn't contain any object
-                    scale = torch.tensor(self.scale, dtype=torch.float)
                     top, bottom, left, right = 0,0,0,0
                     if position_as_bounding_box:
-                        top = torch.min(self.graph.x[:-4])
-                        left = torch.min(self.graph.x[:-3])
-                        bottom = torch.max(self.graph.x[:-2])
-                        right = torch.max(self.graph.x[:-1])
+                        top = torch.min(self.graph.x[:, -4:])
+                        left = torch.min(self.graph.x[:, -3:])
+                        bottom = torch.max(self.graph.x[:, -2:])
+                        right = torch.max(self.graph.x[:, -1:])
+
+                        self.graph.x[:, -4:] = self.graph.x[:, -4:] - torch.tensor([top, left, top, left], dtype=torch.float)
                     else:
-                        bb_top = - self.graph.x[:-4]/2 + self.graph.x[:-2]
-                        bb_bottom = self.graph.x[:-4]/2 + self.graph.x[:-2]
-                        bb_left = - self.graph.x[:-3]/2 + self.graph.x[:-1]
-                        bb_right = self.graph.x[:-3]/2 + self.graph.x[:-1]
+                        bb_top = - self.graph.x[:, -4:-3]/2 + self.graph.x[:, -2:]
+                        bb_bottom = self.graph.x[:, -4:-3]/2 + self.graph.x[:, -2:]
+                        bb_left = - self.graph.x[:, -3:-2]/2 + self.graph.x[:, -1:]
+                        bb_right = self.graph.x[:, -3:-2]/2 + self.graph.x[:, -1:]
 
                         top = torch.min(bb_top)
                         left = torch.min(bb_bottom)
                         bottom = torch.max(bb_left)
                         right = torch.max(bb_right)
 
+                        self.graph.x[:, -2:] = self.graph.x[:, -2:] - torch.tensor([top, left], dtype=torch.float)
+
                     self.scale = (right - left, bottom - top, top, left)
+                    self.graph.scale = self.scale
 
                     scale_double = torch.tensor([self.scale[0], self.scale[1], self.scale[0], self.scale[1]],
                                                 dtype=torch.float)
                     scale_simple = torch.tensor([self.scale[0], self.scale[1]], dtype=torch.float)
-                    self.graph.pos = self.graph.pos / scale_simple
+                    self.graph.pos = (self.graph.pos - torch.tensor([top, left], dtype=torch.float)) / scale_simple
                     self.graph.x[:, -4:] = self.graph.x[:, -4:] / scale_double
 
             if prefilter_KNN:
