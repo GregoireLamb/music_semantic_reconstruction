@@ -94,7 +94,8 @@ class KNNGraphContainer:
 
                     scale_double = torch.tensor([self.scale[0], self.scale[1], self.scale[0], self.scale[1]],
                                                 dtype=torch.float)
-                    self.graph.pos = self.graph.pos / (self.scale[0], self.scale[1])
+                    scale_simple = torch.tensor([self.scale[0], self.scale[1]], dtype=torch.float)
+                    self.graph.pos = self.graph.pos / scale_simple
                     self.graph.x[:, -4:] = self.graph.x[:, -4:] / scale_double
 
             if prefilter_KNN:
