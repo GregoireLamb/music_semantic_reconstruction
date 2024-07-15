@@ -38,7 +38,7 @@ def save_test(test_result):
         f.write(line + '\n')
 
 
-def test_model(path_to_checkpoint: str, dataset_name="musigraph", save_results=False):
+def test_model(path_to_checkpoint: str, save_results=False):
     checkpoint = torch.load(path_to_checkpoint)
     name = path_to_checkpoint.split("/")[-1].split(".")[0]
     writer = SummaryWriter(log_dir=f"./util_scripts/results/runs/{name}")

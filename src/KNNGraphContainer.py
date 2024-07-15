@@ -16,7 +16,7 @@ class KNNGraphContainer:
     """
 
     def __init__(self, raw_data: Data, index: int, label_encoder: LabelEncoder,
-                 config: Config, device: torch.device, scale=(1., 1.), root="") -> None:
+                 config: Config, device: torch.device, scale=(1., 1., 0, 0), root="") -> None:
         """
         :param raw_data: Data object corresponding to the score in the dataset (nodes might be filtered already)
         :param index: Score id
@@ -73,9 +73,28 @@ class KNNGraphContainer:
             if normalize_positions:
                 if self.graph.x.shape[0] > 0:  # skip case where score doesn't contain any object
                     scale = torch.tensor(self.scale, dtype=torch.float)
+                    top, bottom, left, right = 0,0,0,0
+                    if position_as_bounding_box:
+                        top = torch.min(self.graph.x[:-4])
+                        left = torch.min(self.graph.x[:-3])
+                        bottom = torch.max(self.graph.x[:-2])
+                        right = torch.max(self.graph.x[:-1])
+                    else:
+                        bb_top = - self.graph.x[:-4]/2 + self.graph.x[:-2]
+                        bb_bottom = self.graph.x[:-4]/2 + self.graph.x[:-2]
+                        bb_left = - self.graph.x[:-3]/2 + self.graph.x[:-1]
+                        bb_right = self.graph.x[:-3]/2 + self.graph.x[:-1]
+
+                        top = torch.min(bb_top)
+                        left = torch.min(bb_bottom)
+                        bottom = torch.max(bb_left)
+                        right = torch.max(bb_right)
+
+                    self.scale = (right - left, bottom - top, top, left)
+
                     scale_double = torch.tensor([self.scale[0], self.scale[1], self.scale[0], self.scale[1]],
                                                 dtype=torch.float)
-                    self.graph.pos = self.graph.pos / scale
+                    self.graph.pos = self.graph.pos / (self.scale[0], self.scale[1])
                     self.graph.x[:, -4:] = self.graph.x[:, -4:] / scale_double
 
             if prefilter_KNN:

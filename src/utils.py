@@ -187,7 +187,7 @@ def visualize_one_graph(graph, mask, name, score_img, writer: SummaryWriter, pos
         graph = copy.deepcopy(graph).cpu()
         graph.edge_index = graph.edge_index[:, mask]
         pos = graph.pos.numpy()
-        pos = np.array(pos) * np.array(pos_scale)
+        pos = np.array(pos) * np.array(pos_scale[0:2]) + np.array(pos_scale[2:4])
 
         graph = to_networkx(graph)
 
