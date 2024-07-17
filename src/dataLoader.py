@@ -81,7 +81,7 @@ class Loader:
 
     def set_default_train_val_test_split(self, dataset_name: str):
         # Load a snapshot of the split if exists
-        snapshot_file = f'{self.root}./data/loader_snapshot/{dataset_name}_split_train_cal_test_{self.file_name}.pt'
+        snapshot_file = f'{self.root}./data/loader_snapshot/{dataset_name}_split_train_cal_test_{self.file_name}'
         if os.path.isfile(snapshot_file):
             all_split = torch.load(snapshot_file)
             self.train_scores, self.validation_scores, self.test_scores = all_split
