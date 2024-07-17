@@ -289,8 +289,8 @@ def main(config_path="./config.yml", deep_search=False):
 
 if __name__ == '__main__':
     configs = os.listdir('./waiting_list')
-    for file in configs:
-        for i in range(3):
+    for i in range(3):
+        for file in configs:
             config_path = f'./waiting_list/{file}'
             main(config_path=config_path, deep_search=False)
 

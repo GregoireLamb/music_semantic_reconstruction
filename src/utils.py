@@ -101,7 +101,7 @@ def compute_ged_mer_for_graph(graph, predictions, true, config, label_encoder=No
     and compute the GED and MER
     """
     predicted_graph = copy.deepcopy(graph)
-    predicted_graph.edge_index = graph.edge_index[:, predictions == 1]
+    predicted_graph.edge_index = graph.edge_index[:, predictions >= 1]
 
     original_edge_set = [predicted_graph.original_edges_in, predicted_graph.original_edges_out]
 

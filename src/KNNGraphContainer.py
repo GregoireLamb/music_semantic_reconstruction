@@ -94,13 +94,14 @@ class KNNGraphContainer:
                         self.graph.x[:, -2:] = self.graph.x[:, -2:] - torch.tensor([top, left], dtype=torch.float)
 
                     self.scale = (right - left, bottom - top, top, left)
-                    self.graph.scale = self.scale
+                    self.graph.scale = torch.tensor(self.scale, dtype=torch.float)
 
                     scale_double = torch.tensor([self.scale[0], self.scale[1], self.scale[0], self.scale[1]],
                                                 dtype=torch.float)
                     scale_simple = torch.tensor([self.scale[0], self.scale[1]], dtype=torch.float)
                     self.graph.pos = (self.graph.pos - torch.tensor([top, left], dtype=torch.float)) / scale_simple
                     self.graph.x[:, -4:] = self.graph.x[:, -4:] / scale_double
+
 
             if prefilter_KNN:
                 self.graph = self.prefilter_KNNGraph(self.graph)
