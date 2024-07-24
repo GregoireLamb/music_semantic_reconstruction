@@ -59,20 +59,7 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
         writer.add_scalar("lr", optimizer.param_groups[0]["lr"], epoch)
         loss_values = []
         for graph_batch in data_loader:
-            # graph_batch = graph_batch.to(device)
             optimizer.zero_grad()
-
-            # if config['undirected_edges']:
-            #     graph_batch = T.Compose([T.ToUndirected()])(graph_batch)
-
-            # if config['use_sparse_adj']:
-            #     graph_batch = T.Compose([T.ToSparseTensor()])(graph_batch)
-            #     # Only edge_index is turned into adj_t (the other tensor arn't but having them sparse leads to error)
-            #     predictions = model(x=graph_batch.x, pos=graph_batch.pos, edge_index=graph_batch.adj_t).to(device)
-            # elif config['hetero_data']:
-            #     predictions = model(x=graph_batch.x_dict, pos=graph_batch.pos,
-            #                         edge_index=graph_batch.edge_index_dict).to(device)
-            # else:
             predictions = model(x=graph_batch.x, pos=graph_batch.pos, edge_index=graph_batch.edge_index).to(device)
             truth = graph_batch.truth.to(device)
             loss = loss_function(predictions, truth)

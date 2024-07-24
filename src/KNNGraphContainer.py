@@ -72,7 +72,7 @@ class KNNGraphContainer:
 
             if normalize_positions:
                 if self.graph.x.shape[0] > 0:  # skip case where score doesn't contain any object
-                    top, bottom, left, right = 0,0,0,0
+                    # top, bottom, left, right = 0,0,0,0
                     if position_as_bounding_box:
                         top = torch.min(self.graph.x[:, -4:])
                         left = torch.min(self.graph.x[:, -3:])

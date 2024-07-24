@@ -10,15 +10,16 @@ class GNN_graphSage(torch.nn.Module):
         self.medium = medium
         self.large = large
 
-        self.conv1_config = {'in_channels': num_node_features,
-                             'out_channels': 2048,
-                             'aggr': 'mean'}
-        self.conv2_config = {'in_channels': 2048,
-                             'out_channels': 2048,
-                             'aggr': 'mean'}
-        self.conv3_config = {'in_channels': 2048,
-                             'out_channels': 1024,
-                             'aggr': 'mean'}
+        if not small and not medium:
+            self.conv1_config = {'in_channels': num_node_features,
+                                 'out_channels': 2048,
+                                 'aggr': 'mean'}
+            self.conv2_config = {'in_channels': 2048,
+                                 'out_channels': 2048,
+                                 'aggr': 'mean'}
+            self.conv3_config = {'in_channels': 2048,
+                                 'out_channels': 1024,
+                                 'aggr': 'mean'}
         if large:
             self.conv3_config = {'in_channels': 2048,
                                  'out_channels': 2048,
