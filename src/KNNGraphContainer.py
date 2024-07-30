@@ -76,51 +76,52 @@ class KNNGraphContainer:
             self.graph.original_edges_in = torch.tensor([])
             self.graph.original_edges_out = torch.tensor([])
 
-            if normalize_positions:
-                # top, bottom, left, right = 0,0,0,0
-                if position_as_bounding_box:
-                    top = torch.min(self.graph.x[:, -4:])
-                    left = torch.min(self.graph.x[:, -3:])
-                    bottom = torch.max(self.graph.x[:, -2:])
-                    right = torch.max(self.graph.x[:, -1:])
+            if self.graph.x.shape[0] > 0:  # skip case where score doesn't contain any object
+                if normalize_positions:
+                    # top, bottom, left, right = 0,0,0,0
+                    if position_as_bounding_box:
+                        top = torch.min(self.graph.x[:, -4:])
+                        left = torch.min(self.graph.x[:, -3:])
+                        bottom = torch.max(self.graph.x[:, -2:])
+                        right = torch.max(self.graph.x[:, -1:])
 
-                    self.graph.x[:, -4:] = self.graph.x[:, -4:] - torch.tensor([top, left, top, left], dtype=torch.float)
-                else:
-                    bb_top = - self.graph.x[:, -4:-3]/2 + self.graph.x[:, -2:]
-                    bb_bottom = self.graph.x[:, -4:-3]/2 + self.graph.x[:, -2:]
-                    bb_left = - self.graph.x[:, -3:-2]/2 + self.graph.x[:, -1:]
-                    bb_right = self.graph.x[:, -3:-2]/2 + self.graph.x[:, -1:]
+                        self.graph.x[:, -4:] = self.graph.x[:, -4:] - torch.tensor([top, left, top, left], dtype=torch.float)
+                    else:
+                        bb_top = - self.graph.x[:, -4:-3]/2 + self.graph.x[:, -2:]
+                        bb_bottom = self.graph.x[:, -4:-3]/2 + self.graph.x[:, -2:]
+                        bb_left = - self.graph.x[:, -3:-2]/2 + self.graph.x[:, -1:]
+                        bb_right = self.graph.x[:, -3:-2]/2 + self.graph.x[:, -1:]
 
-                    top = torch.min(bb_top)
-                    left = torch.min(bb_bottom)
-                    bottom = torch.max(bb_left)
-                    right = torch.max(bb_right)
+                        top = torch.min(bb_top)
+                        left = torch.min(bb_bottom)
+                        bottom = torch.max(bb_left)
+                        right = torch.max(bb_right)
 
-                    self.graph.x[:, -2:] = self.graph.x[:, -2:] - torch.tensor([top, left], dtype=torch.float)
+                        self.graph.x[:, -2:] = self.graph.x[:, -2:] - torch.tensor([top, left], dtype=torch.float)
 
-                    self.scale = (right - left, bottom - top, top, left)
-                    self.graph.scale = torch.tensor(self.scale, dtype=torch.float)
+                        self.scale = (right - left, bottom - top, top, left)
+                        self.graph.scale = torch.tensor(self.scale, dtype=torch.float)
 
-                    scale_double = torch.tensor([self.scale[0], self.scale[1], self.scale[0], self.scale[1]],
+                        scale_double = torch.tensor([self.scale[0], self.scale[1], self.scale[0], self.scale[1]],
+                                                    dtype=torch.float)
+                        scale_simple = torch.tensor([self.scale[0], self.scale[1]], dtype=torch.float)
+                        self.graph.pos = (self.graph.pos - torch.tensor([top, left], dtype=torch.float)) / scale_simple
+                        self.graph.x[:, -4:] = self.graph.x[:, -4:] / scale_double
+
+
+                if prefilter_KNN:
+                    self.graph = self.prefilter_KNNGraph(self.graph)
+
+                # Generate truth, a tensor of 1 if the edge of the KNN graph is in the original graph, 0 otherwise
+                knn_edges_set_list = [(self.graph.edge_index[0][i].item(), self.graph.edge_index[1][i].item()) for i in
+                                      range(len(self.graph.edge_index[0]))]
+
+                self.graph.truth = torch.tensor([1 if edge in true_edges_set else 0 for edge in knn_edges_set_list],
                                                 dtype=torch.float)
-                    scale_simple = torch.tensor([self.scale[0], self.scale[1]], dtype=torch.float)
-                    self.graph.pos = (self.graph.pos - torch.tensor([top, left], dtype=torch.float)) / scale_simple
-                    self.graph.x[:, -4:] = self.graph.x[:, -4:] / scale_double
 
-
-            if prefilter_KNN:
-                self.graph = self.prefilter_KNNGraph(self.graph)
-
-            # Generate truth, a tensor of 1 if the edge of the KNN graph is in the original graph, 0 otherwise
-            knn_edges_set_list = [(self.graph.edge_index[0][i].item(), self.graph.edge_index[1][i].item()) for i in
-                                  range(len(self.graph.edge_index[0]))]
-
-            self.graph.truth = torch.tensor([1 if edge in true_edges_set else 0 for edge in knn_edges_set_list],
-                                            dtype=torch.float)
-
-            if len(self.raw_data.edge_index.shape) >= 2:
-                self.graph.original_edges_in = self.raw_data.edge_index[0].clone().detach()
-                self.graph.original_edges_out = self.raw_data.edge_index[1].clone().detach()
+                if len(self.raw_data.edge_index.shape) >= 2:
+                    self.graph.original_edges_in = self.raw_data.edge_index[0].clone().detach()
+                    self.graph.original_edges_out = self.raw_data.edge_index[1].clone().detach()
 
             # make directory if not exist
             if not os.path.isdir(f'{processing_folder}/'):
