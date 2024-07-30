@@ -66,7 +66,6 @@ class KNNGraphContainer:
             else:
                 true_edges_set = {(self.raw_data.edge_index[0][i].item(), self.raw_data.edge_index[1][i].item()) for i
                                   in range(len(self.raw_data.edge_index[0]))}
-                return # skip case where score doesn't contain any object
 
             self.graph = T.KNNGraph(k=n_neighbors)(self.raw_data)
             # set default
