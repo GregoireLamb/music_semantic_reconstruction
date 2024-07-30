@@ -13,11 +13,6 @@ class Classifier(torch.nn.Module):
     def forward(self, node_embeddings: Tensor, edge_index: Tensor) -> Tensor:
         # Convert node embeddings to edge-level representations:
 
-        # if not torch.is_tensor(edge_label_index): # Deals with the case where edge_label_index is a sparse tensor
-        #     # TODO might do the conversion earlier in the pipeline for efficiency
-        #     row, col , edge_attr = edge_label_index.t().coo()
-        #     edge_label_index = torch.stack([row, col], dim=0)
-
         edge_feat_node_1 = node_embeddings[edge_index[0]]
         edge_feat_node_2 = node_embeddings[edge_index[1]]
 

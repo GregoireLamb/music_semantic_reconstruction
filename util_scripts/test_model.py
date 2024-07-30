@@ -51,6 +51,9 @@ def test_model(path_to_checkpoint: str, save_results=False):
         for key, value in config_param.items():
             config[key] = value
 
+    print("Warning: manual setting in test_model")
+    config["n_neighbors_KNN"] = 13
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # Use GPU if available
     loader = Loader(config=config, device=device)
     dataset = DatasetHandler(config=config)
@@ -118,7 +121,8 @@ seed_everything_(42)
 models = [m for m in os.listdir('./models/')]
 
 # filter the list
-models = [models[0],models[-1]]
+models = [""]
+print(models)
 
 for model in models:
     test_model(f'./models/{model}', save_results=True)
