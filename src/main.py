@@ -17,7 +17,7 @@ from src.utils import *
 
 
 def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.device('cpu'),
-          model_to_load=False) -> Model:
+          model_to_load=False, force_lr=False) -> Model:
     """
     Training loop
     """
@@ -37,6 +37,10 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
                                                                                      optimizer, config)
     if config['start_from_best_model']:
         best_optimizer = copy.deepcopy(optimizer)
+
+    if force_lr != False:
+        optimizer = torch.optim.Adam(list(model.parameters()), lr=force_lr)
+
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
                                                mode='min',
                                                factor=config['scheduler_factor'],
@@ -104,6 +108,7 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
         "best_validation_loss": best_validation_loss,
         "start_epoch": start_epoch,
         "final_epoch": start_epoch + config['n_epochs'],
+        "final_lr": optimizer.param_groups[0]["lr"],
         "config": config.__repr__()
     }
 
@@ -217,16 +222,12 @@ def save_model(config: Config, train_results: dict, run_name: str, accuracy, edi
         msg = run_name + ',' + ','.join([str(value) for value in config.values()]) + ',' + str(accuracy)+',' + str(edit_distance)+',' + str(mer)+ '\n'
         file.write(msg)
 
-def main(config_path="./config.yml", deep_search=False):
-    if deep_search:
-        round = 0
-        round_try = 0
-        round_best_loss = np.inf
-        round_best_model = None
-
+def main(config_path="./config.yml", deep_search=1):
     config = Config(path=config_path)
+    force_lr = False
 
-    while True:
+    while deep_search > 0:
+        improve = False
         seed_everything_(config['seed'])
         run_name = config_path.split('/')[-1].split('.')[0] + "_" + datetime.now().strftime('%m-%d-%Y_%H-%M')
         writer = SummaryWriter('./runs/' + run_name)
@@ -240,38 +241,28 @@ def main(config_path="./config.yml", deep_search=False):
                                           writer=writer,
                                           loader=loader,
                                           device=device,
-                                          model_to_load=config['load_model'])
+                                          model_to_load=config['load_model'],
+                                          force_lr=force_lr)
 
         print("Best model is reached at epoch: ", train_results['best_epoch'])
 
         if train_results['best_epoch'] != -1:
+            improve = True
             accuracy, edit_distance, mer, link_analyse_dict = test(best_model, device, loader, writer, config)
-
             save_model(config, train_results, run_name, accuracy, edit_distance, mer)
 
         writer.flush()
         writer.close()
 
-        if not deep_search:
-            return
+        deep_search -= 1
 
-        if deep_search:
-            if round_best_loss > train_results['best_validation_loss']:
-                round_best_loss = train_results['best_validation_loss']
-                round_best_model = './models/' + run_name + '.pth'
+        if deep_search > 0:
+            if improve:
+                config['load_model'] = "./models/" + run_name + ".pth"
+            else:
+                force_lr = train_results['final_lr']
 
-            round_try += 1
-            if round_try >= 3:
-                round += 1
-                round_try = 0
-                config['load_model'] = round_best_model
-                config['start_from_best_model'] = True
-
-            if round >= 12:
-                print("Deep search is done")
-                return
-
-            print("Deep search round ", round, " try ", round_try)
+        print("Deep search round ", deep_search)
 
 
 if __name__ == '__main__':
@@ -279,5 +270,5 @@ if __name__ == '__main__':
     for i in range(1):
         for file in configs:
             config_path = f'./waiting_list/{file}'
-            main(config_path=config_path, deep_search=False)
+            main(config_path=config_path, deep_search=5)
 
