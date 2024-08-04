@@ -143,7 +143,7 @@ def mix_multi_predictions(graph, all_predictions, linkType_model_dict, label_enc
 def test_model_ensemble(dict_linkType_pathToModel: dict):
     dict_linkType_model = {}
     config = Config()
-    writer = SummaryWriter(log_dir=f"./util_scripts/results/runs/model_ensemble_{datetime.now()}")
+    writer = SummaryWriter(log_dir=f"./util_scripts/results/runs/model_ensemble_{str(datetime.now()).replace(' ','_')}")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     dataset_loaded = False
     print(datetime.now())
@@ -163,7 +163,9 @@ def test_model_ensemble(dict_linkType_pathToModel: dict):
             init_n_label = len(loader.datasetHandler.label_list) + 4  # +4 is for the position
 
         # set up the model
-        dict_linkType_model[linkType] = Model(init_n_label, config).to(device).load_state_dict(checkpoint['best_model']).eval()
+        model = Model(init_n_label, config).to(device)
+        model.load_state_dict(checkpoint['best_model'])
+        dict_linkType_model[linkType] = model
 
     writer.add_text('config', str(config))
 
@@ -174,13 +176,14 @@ def test_model_ensemble(dict_linkType_pathToModel: dict):
     confusion_mat = [[0, 0], [0, 0]]
     accuracy, edit_distances, music_error_rate = [], [], []
     do_visualize_first_score = config['visualize_first_score']
-    label_encoder = loader.dataset.label_encoder
+    label_encoder = dataset.label_encoder
 
     for graph in (pbar := tqdm(test_loader)):
         pbar.set_description(f"Testing ")
 
         all_predictions = []
         for linkType, model in dict_linkType_model.items():
+            model.eval()
             predictions = model(x=graph.x, pos=graph.pos, edge_index=graph.edge_index)
             all_predictions.append(predictions)
         predictions = mix_multi_predictions(graph, all_predictions, dict_linkType_model, label_encoder)
