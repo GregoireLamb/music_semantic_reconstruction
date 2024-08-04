@@ -119,7 +119,7 @@ def test_model(path_to_checkpoint: str, save_results=False):
 #     # print the max of each column with its index
 #     print(df_notehead)
 
-def mix_multi_predictions(graph, all_predictions, linkType_model_dict, label_encoder):
+def mix_multi_predictions(graph, all_predictions, dict_linkType_modelNUmber, label_encoder):
     predictions = all_predictions[0]
 
     for i in range(len(predictions)):
@@ -136,7 +136,10 @@ def mix_multi_predictions(graph, all_predictions, linkType_model_dict, label_enc
 
         key = f"{class1} - {class2}"
 
-        model_to_use = linkType_model_dict[key]
+        if key not in dict_linkType_modelNUmber:
+            continue
+
+        model_to_use = dict_linkType_modelNUmber[key]
         predictions[i] = all_predictions[model_to_use][i]
     return predictions
 
@@ -182,11 +185,13 @@ def test_model_ensemble(dict_linkType_pathToModel: dict):
         pbar.set_description(f"Testing ")
 
         all_predictions = []
+        dict_linkType_modelNUmber = {key: i for i, key in enumerate(dict_linkType_model.keys())}
+
         for linkType, model in dict_linkType_model.items():
             model.eval()
             predictions = model(x=graph.x, pos=graph.pos, edge_index=graph.edge_index)
             all_predictions.append(predictions)
-        predictions = mix_multi_predictions(graph, all_predictions, dict_linkType_model, label_encoder)
+        predictions = mix_multi_predictions(graph, all_predictions, dict_linkType_modelNUmber, label_encoder)
 
         predictions = predictions.view(-1)
 
