@@ -263,12 +263,20 @@ seed_everything_(42)
 dict_linkType_pathToModel_6_labels = {
     "noteheadBlack - stem":"./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
     "noteheadBlack - accidental":"./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
-    "noteheadBlack - flag":"./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
+    "noteheadBlack - flag":"./models/ds_continue_6_labels_123_08-05-2024_07-31.pth",
     "noteheadBlack - beam":"./models/ds_continue_6_labels_12345_08-02-2024_02-17.pth",
     "noteheadWholeOrHalf - stem":"./models/ds_continue_6_labels_12345_08-02-2024_12-13.pth",
-    "noteheadWholeOrHalf - accidental":"./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
+    "noteheadWholeOrHalf - accidental":"./models/ds_continue_6_labels_12345_08-04-2024_15-41.pth",
     "noteheadWholeOrHalf - beam":"./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
-    "noteheadWholeOrHalf - flag":"./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
+    "noteheadWholeOrHalf - flag":"./models/ds_continue_6_labels_123_08-05-2024_07-31.pth",
+}
+
+
+dict_linkType_pathToModel_10_labels = {
+    'notehead - stem':"./models/k13_seed3_07-30-2024_15-31.pth",
+    'notehead - accidental':"./models/k13_seed3_07-30-2024_15-31.pth",
+    'notehead - flag':"./models/k13_seed3_07-30-2024_15-31.pth",
+    'notehead - beam': "./models/ds_continue_10_labels_123_08-02-2024_03-17.pth",
 }
 
 # filter the list
@@ -277,3 +285,4 @@ dict_linkType_pathToModel_6_labels = {
 
 # mmodel ensemble
 test_model_ensemble(dict_linkType_pathToModel_6_labels)
+test_model_ensemble(dict_linkType_pathToModel_10_labels)
