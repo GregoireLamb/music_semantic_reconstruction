@@ -51,6 +51,11 @@ def load_model(model_path: str, model: Model, best_model: Model, optimizer, conf
         model.load_state_dict(checkpoint['best_model'])
         starting_epoch = best_epoch + 1
         optimizer.load_state_dict(checkpoint['best_optimizer'])
+
+    if 'fine_tunning' in config:
+        config['fine_tunning'] = False
+        best_validation_loss = np.inf
+
     return model, best_model, optimizer, starting_epoch, best_validation_loss
 
 

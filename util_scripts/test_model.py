@@ -159,6 +159,10 @@ def test_model_ensemble(dict_linkType_pathToModel: dict):
         for key, value in config_param.items():
             config[key] = value
 
+        # Hard coded set up
+        print("Warning: dataset set manually")
+        config["dataset"] = 'doremi_measure_cut'
+
         if not dataset_loaded:
             loader = Loader(config=config, device=device)
             dataset = DatasetHandler(config=config)
