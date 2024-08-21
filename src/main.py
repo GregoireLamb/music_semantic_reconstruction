@@ -17,9 +17,9 @@ from src.utils import *
 
 
 def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.device('cpu'),
-          model_to_load=False, force_lr=False) -> Model:
+          model_to_load=False, force_lr=False):
     """
-    Training loop
+    Main training loop
     """
     # INIT
     best_validation_loss, start_epoch, best_epoch = np.inf, 0, -1
@@ -38,7 +38,7 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
     if config['start_from_best_model']:
         best_optimizer = copy.deepcopy(optimizer)
 
-    if force_lr != False:
+    if force_lr != False: #Enable force a new value of the learning rate
         optimizer = torch.optim.Adam(list(model.parameters()), lr=force_lr)
 
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer,
@@ -116,6 +116,9 @@ def train(config: Config, writer: SummaryWriter, loader: Loader, device=torch.de
 
 
 def validate(loader: Loader, model: Model, device: torch.device, loss_function: torch.nn.Module, config:Config):
+    """
+    Validation function, the model is evaluated on the validation set by the loss function
+    """
     loss_values = []
     data_loader = loader.get_dataLoader(split="validation")
     for graph_validation_batch in data_loader:
@@ -131,6 +134,9 @@ def validate(loader: Loader, model: Model, device: torch.device, loss_function: 
 
 
 def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWriter, config: Config):
+    """
+    Test function, evaluate the model on the test set and update the tensorboard writer
+    """
     model = model.to(device)
     model.eval()
     link_analyse_dict = {}
@@ -169,9 +175,9 @@ def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWrit
 
         conf = confusion_matrix(truth, predictions)
 
-        if len(conf) == 1:  # case there is only positive or negative edges
-            print("Unusual conf matrix")
-            if len(conf[0]) != 1:
+        if len(conf) == 1:  # In case there are only positive or negative edges, all predicted positive or negative
+            print("Unusual configuration matrix")
+            if len(conf[0]) != 1: # In case there are only positive or negative edges
                 print("Only positive or negative edges in the confusion matrix ", len(conf))
                 if truth[0] == 1:
                     conf = np.array([[0, 0], conf[0]])
@@ -207,11 +213,17 @@ def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWrit
 
 
 
-def save_model(config: Config, train_results: dict, run_name: str, accuracy, edit_distance, mer):
+def save_model(config: Config, train_results: dict, run_name: str, accuracy, edit_distance, mer) -> None:
+    """
+    Save the model as a checkpoint that can be loaded later and update the results.csv file that contains the
+    configuration and some metrics reached by the models
+    """
+    # save the model
     if config["save_model"]:
         print("saving model ...")
         torch.save(train_results, './models/' + run_name + '.pth')
-    # create file n_neigbhors_exploration if not exists and append edit dist
+
+    # update or create the result.csv file
     if not os.path.isfile('./results.csv'):
         with open('./results.csv', "w") as file:
             head_line = 'experiment,' + ','.join([str(key) for key in config.keys()]) + ',edit_distance,MER,Accuracy\n'
@@ -222,47 +234,32 @@ def save_model(config: Config, train_results: dict, run_name: str, accuracy, edi
         msg = run_name + ',' + ','.join([str(value) for value in config.values()]) + ',' + str(accuracy)+',' + str(edit_distance)+',' + str(mer)+ '\n'
         file.write(msg)
 
-def main(config_path="./config.yml", deep_search=1):
+def main(config_path="./config.yml") -> None:
+    # SETUP
     config = Config(path=config_path)
-    force_lr = False
+    seed_everything_(config['seed'])
+    run_name = config_path.split('/')[-1].split('.')[0] + "_" + datetime.now().strftime('%m-%d-%Y_%H-%M')
+    writer = SummaryWriter('./runs/' + run_name)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    loader = Loader(config, device)
+    dataset = DatasetHandler(config)
+    loader.load(dataset)
 
-    while deep_search > 0:
-        improve = False
-        seed_everything_(config['seed'])
-        run_name = config_path.split('/')[-1].split('.')[0] + "_" + datetime.now().strftime('%m-%d-%Y_%H-%M')
-        writer = SummaryWriter('./runs/' + run_name)
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        loader = Loader(config, device)
+    # TRAINING
+    train_results, best_model = train(config=config,
+                                      writer=writer,
+                                      loader=loader,
+                                      device=device,
+                                      model_to_load=config['load_model'])
 
-        dataset = DatasetHandler(config)
-        loader.load(dataset)
+    print("Best model is reached at epoch: ", train_results['best_epoch'])
 
-        train_results, best_model = train(config=config,
-                                          writer=writer,
-                                          loader=loader,
-                                          device=device,
-                                          model_to_load=config['load_model'],
-                                          force_lr=force_lr)
+    if train_results['best_epoch'] != -1:
+        accuracy, edit_distance, mer, link_analyse_dict = test(best_model, device, loader, writer, config)
+        save_model(config, train_results, run_name, accuracy, edit_distance, mer)
 
-        print("Best model is reached at epoch: ", train_results['best_epoch'])
-
-        if train_results['best_epoch'] != -1:
-            improve = True
-            accuracy, edit_distance, mer, link_analyse_dict = test(best_model, device, loader, writer, config)
-            save_model(config, train_results, run_name, accuracy, edit_distance, mer)
-
-        writer.flush()
-        writer.close()
-
-        deep_search -= 1
-
-        if deep_search > 0:
-            if improve:
-                config['load_model'] = "./models/" + run_name + ".pth"
-            else:
-                force_lr = train_results['final_lr']
-
-        print("Deep search round ", deep_search)
+    writer.flush()
+    writer.close()
 
 
 if __name__ == '__main__':

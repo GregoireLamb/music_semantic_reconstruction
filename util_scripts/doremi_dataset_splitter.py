@@ -2,6 +2,10 @@ import os
 import random
 import numpy as np
 
+"""
+Script used to generate a train, validation and test split for the DoReMi dataset.
+"""
+
 xml_dir=r'./data/DoReMi_v1/Parsed_by_page_omr_xml/'
 output_path = './data/DoReMi_v1/'
 train_ratio=0.7

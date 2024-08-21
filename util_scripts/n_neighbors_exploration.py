@@ -13,18 +13,16 @@ from src.datasetHandler import DatasetHandler
 from src.config import Config
 from src.dataLoader import Loader
 
-####
-#
-#   Estimate link coverage of KNN graphs based on the number of neighbors used during the KNN graph generation
-#
-###
+"""
+Script used to explore the influence of k in the KNN graph.
+"""
 
 output_path = '../util_scripts/results/'
 dataset_names = ['muscima_measure_cut']
 label_to_use = 'full_muscima_labels'
 datasetHandler_list = []
 config = Config()
-n_values = [13, 14, 15, 20]
+k_values = [13, 14, 15, 20]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 config['labels_to_use'] = label_to_use
@@ -32,7 +30,7 @@ config['undirected_edges'] = False
 config['prefilter_KNN'] = False
 for dataset_name in dataset_names:
     config['dataset'] = dataset_name
-    for n_value in n_values:
+    for n_value in k_values:
         config['n_neighbors_KNN'] = n_value
         datasetHandler = DatasetHandler(config)
         loader = Loader(config, device)

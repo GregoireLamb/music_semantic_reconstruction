@@ -39,7 +39,7 @@ class Loader:
         directed = "undirected" if self.config['undirected_edges'] else "directed"
 
         self.file_name = (f'data_loader_{dataset_name}_{labels_to_use}_{position_as_bounding_box}_{n_neighbors_KNN}_'
-                     f'{prefilter_KNN}_{normalize_positions}_{directed}.pt')
+                          f'{prefilter_KNN}_{normalize_positions}_{directed}.pt')
 
         file_path = os.path.abspath(os.path.join(self.root, f'./data/loader_snapshot/{self.file_name}'))
         if os.path.isfile(file_path):  # load the preprocessed data if it exists
@@ -95,7 +95,6 @@ class Loader:
             validation_ids = self.read_ids_file(f'{split_location}/validation.ids')
             test_ids = self.read_ids_file(f'{split_location}/test.ids')
 
-
         self.train_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in train_ids]
         self.validation_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in validation_ids]
         self.test_scores = [self.datasetHandler.raw_file_names.index(filename) for filename in test_ids]
@@ -136,7 +135,7 @@ class Loader:
                 for i, edge in enumerate(zip(graph.edge_index[0].tolist(), graph.edge_index[1].tolist())):
                     if graph.truth[i] == 1:
                         truth_set.add(edge)
-                        truth_set.add((edge[1],edge[0]))
+                        truth_set.add((edge[1], edge[0]))
 
                 graph = T.Compose([T.ToUndirected()])(graph)
                 new_truth = torch.zeros(graph.edge_index.shape[1])
@@ -155,6 +154,9 @@ class Loader:
         return data_loader
 
     def read_ids_file(self, file_path):
+        """
+        Read the ids that contains the train-test-validation split and return the list of score ids
+        """
         with open(file_path, 'r') as f:
             lines = f.readlines()
             lines = [line.rstrip('\n') for line in lines]

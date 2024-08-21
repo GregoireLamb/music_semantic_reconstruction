@@ -15,6 +15,10 @@ from src.datasetHandler import DatasetHandler
 from src.config import Config
 from src.dataLoader import Loader
 
+"""
+Script used to explore the dataset, it generate a heatmap with the number of nodes and links in the dataset as axis. 
+"""
+
 output_path = './util_scripts/results/'
 dataset_names = ['musigraph']
 label_to_use = 'full_musigraph'

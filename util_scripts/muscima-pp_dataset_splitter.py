@@ -2,6 +2,10 @@ import os
 
 import random
 
+"""
+Script used to generate a train, validation and test split for the Muscima dataset.
+"""
+
 file_path = f'./data/muscima-pp/v2.1/specifications/testset-independent.txt'
 with open(file_path, 'r') as f:
     lines = f.readlines()

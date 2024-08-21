@@ -2,10 +2,10 @@ import copy
 import os
 from io import BytesIO
 
-import pandas as pd
-import seaborn as sn
 import networkx as nx
 import numpy as np
+import pandas as pd
+import seaborn as sn
 import torch
 from PIL import Image
 from matplotlib import pyplot as plt
@@ -35,7 +35,7 @@ def seed_everything_(seed: int) -> None:
 
 def load_model(model_path: str, model: Model, best_model: Model, optimizer, config: Config):
     """
-    Load the model from the checkpoint to continue the training
+    Load the model from the checkpoint to either continue the training or restart from the best model.
     :return: model, best_model, optimizer, starting_epoch, best_validation_loss
     """
     print("Loading ", model_path)
@@ -85,7 +85,7 @@ def edit_distance(original_set, predicted_set, config):
         set_3 = set2 - set1.intersection(set2)
         for i in set_3:
             set2.remove(i)
-            set2.add((i[1],i[0]))
+            set2.add((i[1], i[0]))
 
     dist = len(set1.union(set2)) - len(set1.intersection(set2))
     mer = -1
@@ -129,12 +129,11 @@ def compute_ged_mer_for_batch(graph, predictions, config):
 def perform_predictions_analysis(graph, predictions, truth, label_encoder, dict={}):
     """
     Analyze the prediction of the model
-    :return: a dictionnary with the accuracy for each type of edge
+    :return: a dictionary with the accuracy for each link type
     """
     graph = graph.to('cpu')
     primitive_classes = [label_encoder.inverse_transform([np.where(graph.x[i] == 1)[0][0]])[0] for i in
                          range(graph.x.shape[0])]
-
 
     for i in range(len(predictions)):
         primitive1 = graph.edge_index[0][i].item()
@@ -177,33 +176,33 @@ def generate_visualisations(graph, predictions, writer: SummaryWriter, score_img
 
 
 def visualise_one_graph(graph, mask, name, score_img, writer: SummaryWriter, color: str):
-        """
-        Visualise one graph with the edges selected by the mask and save it
-        """
-        fig, ax = plt.subplots(figsize=(7.5, 7.5), dpi=175)
-        ax.imshow(score_img)
+    """
+    Visualise one graph with the edges selected by the mask and save it with the tensorboard writer
+    """
+    fig, ax = plt.subplots(figsize=(7.5, 7.5), dpi=175)
+    ax.imshow(score_img)
 
-        graph = copy.deepcopy(graph).cpu()
-        graph.edge_index = graph.edge_index[:, mask]
-        pos = graph.pos.numpy()
-        pos_scale = np.array([sc.item() for sc in graph.scale])
-        pos = pos * pos_scale[0:2] + pos_scale[2:4]
+    graph = copy.deepcopy(graph).cpu()
+    graph.edge_index = graph.edge_index[:, mask]
+    pos = graph.pos.numpy()
+    pos_scale = np.array([sc.item() for sc in graph.scale])
+    pos = pos * pos_scale[0:2] + pos_scale[2:4]
 
-        graph = to_networkx(graph)
+    graph = to_networkx(graph)
 
-        plt.title(name + " (num_edges = " + str(len(graph.edges)) + ")")
-        nx.draw(graph,
-                pos,
-                alpha=1,
-                node_size=0.8,
-                node_color='red',
-                edge_color=color,
-                arrowsize=10,
-                width=1)
+    plt.title(name + " (num_edges = " + str(len(graph.edges)) + ")")
+    nx.draw(graph,
+            pos,
+            alpha=1,
+            node_size=0.8,
+            node_color='red',
+            edge_color=color,
+            arrowsize=10,
+            width=1)
 
-        writer.add_figure(f"Score/{name}", fig)
-        writer.flush()
-        plt.close('all')
+    writer.add_figure(f"Score/{name}", fig)
+    writer.flush()
+    plt.close('all')
 
 
 def save_confusion_matrix(confusion_mat, writer: SummaryWriter):

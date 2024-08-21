@@ -1,8 +1,8 @@
 import copy
 import os
+import re
 import xml.etree.ElementTree as ET
 from random import random
-import re
 
 import cv2
 import numpy as np
@@ -12,21 +12,10 @@ from mung.io import read_nodes_from_file
 from tqdm import tqdm
 
 
-def visualize_score_with_obj(
-        df: pd.DataFrame,
-        score_path,
-        output_path,
-        dpi=300,
-        measure_obj=False):
+def visualize_score_with_obj(df: pd.DataFrame, score_path: str, output_path: str, dpi=300,measure_obj=False) -> None:
     """
-    Generate an image with every bouding box and their ids on top of it from a dataframe, if measure_obj is a number,
-    colors are applyed depending on the value in the column 'measure'
-    :param df:
-    :param score_path:
-    :param output_path:
-    :param dpi:
-    :param measure_obj:
-    :return:
+    Generate an image of a score with every bounding box of the primitives and their ids on top of it.
+    If measure_obj is a number, colors are applied depending on the value in the column 'measure'
     """
     color_dict = {}
     if measure_obj != False:
@@ -67,6 +56,7 @@ def visualize_score_with_obj(
     plt.savefig(output_path, dpi=dpi, bbox_inches='tight')
     # plt.show()
     plt.close()
+
 
 def adapt_position(measures_image_limit, child):
     """
@@ -110,14 +100,15 @@ def filter_elements(element, id_relative2measure, id_obj_in_measure, measures_im
             # Find the 'Id' element within this node
             for subchild in child:
                 if subchild.tag == 'Id' and subchild.text in id_relative2measure:
-                    child = adapt_position(measures_image_limit, child)  # TODO WARINING: MASK NOT CORRECT ANYMORE
+                    child = adapt_position(measures_image_limit, child)
                     if subchild.text not in id_obj_in_measure:
                         child = cut_out_in_links(child, id_obj_in_measure, banned_id_list)
                     filtered_children.append(child)
                     break
         else:
             # Otherwise, recursively check the child's children
-            filtered_child = filter_elements(child, id_relative2measure, id_obj_in_measure, measures_image_limit, banned_id_list)
+            filtered_child = filter_elements(child, id_relative2measure, id_obj_in_measure, measures_image_limit,
+                                             banned_id_list)
             if filtered_child is not None:
                 filtered_children.append(filtered_child)
 
@@ -133,13 +124,7 @@ def filter_elements(element, id_relative2measure, id_obj_in_measure, measures_im
 
 def filter_xml(input_file, output_file, id_relative2measure, id_obj_in_measure, measures_image_limit, banned_id_list):
     """
-    Generate and save the xml file with the objects corresponding to the id given
-    :param input_file:
-    :param output_file:
-    :param id_relative2measure:
-    :param id_obj_in_measure:
-    :param measures_image_limit:
-    :return:
+    Generate and save the xml file with the objects corresponding to the given id
     """
     # Parse the input XML file
     tree = ET.parse(input_file)
@@ -157,6 +142,9 @@ def filter_xml(input_file, output_file, id_relative2measure, id_obj_in_measure, 
 
 
 def remove_staff_lines(musical_primitives):
+    """
+    Remove the staff lines from the list of musical primitives and create a list with their ids
+    """
     musical_primitives_tmp = musical_primitives.copy()
     banned_ids = []
     for c in musical_primitives:
@@ -318,16 +306,17 @@ def cut_measures(img_score_path: str, xml_path: str, output_path: str,
 
     df_visu_all_obj = pd.DataFrame(df_visu_all_obj)
     # Generate colorful full image with all obj
-    visualize_score_with_obj(df_visu_all_obj, img_score_path, output_path + 'full_obj/' + score_name + '.png', dpi, measure_obj=len(objects_in_measure))
+    visualize_score_with_obj(df_visu_all_obj, img_score_path, output_path + 'full_obj/' + score_name + '.png', dpi,
+                             measure_obj=len(objects_in_measure))
 
 
 # Input directory paths
-DATASET = 'muscima-pp' # 'doremi' or 'muscima-pp'
+DATASET = 'muscima-pp'  # 'doremi' or 'muscima-pp'
 
 if DATASET == 'muscima-pp':
     xml_dir = r'./data/muscima-pp/v2.1/data/annotations/'
     img_dir = r'./data/muscima-pp/v2.1/images/fulls/'
-    output_path='./data/muscima-pp/measure_cut/'
+    output_path = './data/muscima-pp/measure_cut/'
 elif DATASET == 'doremi':
     xml_dir = r'./data/DoReMi_v1/Parsed_by_page_omr_xml/'
     img_dir = r'./data/DoReMi_v1/Images/'
@@ -338,7 +327,6 @@ else:
 # Get lists of full paths
 list_score_xml_path = [os.path.join(xml_dir, filename) for filename in os.listdir(xml_dir) if filename.endswith('.xml')]
 list_score_img_path = [os.path.join(img_dir, filename) for filename in os.listdir(img_dir) if filename.endswith('.png')]
-
 
 count_measure = 0
 print('Total score to cut: ', len(list_score_xml_path))
@@ -354,7 +342,6 @@ elif DATASET == 'doremi':
         formatted_page_number = f"{int(page_number):03}"
         name_img = f"{part1}-{formatted_page_number}"
         img_path = os.path.join(img_dir, f"{name_img}.png")
-        assert img_path in list_score_img_path, f"Image {img_path} not found"
         pairs_xml_img.append((xml, img_path))
 
 for xml_path, image_path in (pbar := tqdm(pairs_xml_img)):

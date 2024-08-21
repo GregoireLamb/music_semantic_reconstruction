@@ -1,5 +1,10 @@
 import os
 
+"""
+Script used to generate a train, validation and test split for the dataset once they have been divided my measure.
+It ensure the split is consistent with the full page split.
+"""
+
 DATASET = "doremi"
 
 if DATASET == "muscima-pp":

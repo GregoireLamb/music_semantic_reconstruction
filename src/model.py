@@ -7,12 +7,13 @@ from src.gnn_layer.Model_GraphSAGE import GNN_graphSage
 
 
 class Classifier(torch.nn.Module):
+    """
+    This class is used to combine node embeddings to predict the existence of an edge between them.
+    """
     def __init__(self):
         super(Classifier, self).__init__()
 
     def forward(self, node_embeddings: Tensor, edge_index: Tensor) -> Tensor:
-        # Convert node embeddings to edge-level representations:
-
         edge_feat_node_1 = node_embeddings[edge_index[0]]
         edge_feat_node_2 = node_embeddings[edge_index[1]]
 
@@ -21,6 +22,10 @@ class Classifier(torch.nn.Module):
 
 
 class Model(torch.nn.Module):
+    """
+    This class is used to combine the GNN and the classifier.
+    It handle the different type of GNN layers.
+    """
 
     def __init__(self, num_node_features, config):
         super().__init__()

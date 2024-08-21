@@ -3,10 +3,7 @@ import sys
 from datetime import datetime
 
 import numpy as np
-import pandas as pd
-import seaborn as sns
 import yaml
-from matplotlib import pyplot as plt
 from sklearn.metrics import confusion_matrix, accuracy_score
 from tqdm import tqdm
 
@@ -23,9 +20,15 @@ from src.dataLoader import Loader
 from src.model import Model
 from src.main import test
 
+"""
+Scirpt used to test a model or a model ensemble
+"""
+
 
 def save_test(test_result):
-    # try is ./util_scripts/results/test_results.csv exists
+    """
+    Save the test results in a csv file
+    """
     if not os.path.isfile('./util_scripts/results/test_results.csv'):
         # if it does, open it in append mode
         with open('./util_scripts/results/test_results.csv', 'w') as f:
@@ -42,6 +45,11 @@ def save_test(test_result):
 
 
 def test_model(path_to_checkpoint: str, save_results=False):
+    """
+    Main test (similar to the test used after a training).
+    It enables to hard encode some parameters e.g. If the model has been train on a dataset but we want to evaluate it
+    on another one.
+    """
     checkpoint = torch.load(path_to_checkpoint)
     name = path_to_checkpoint.split("/")[-1].split(".")[0]
     writer = SummaryWriter(log_dir=f"./util_scripts/results/runs/{name}")
@@ -83,43 +91,12 @@ def test_model(path_to_checkpoint: str, save_results=False):
     writer.close()
 
 
-# def visu_results(file_path='./util_scripts/results/test_results.csv', output_path='./util_scripts/results/test_plot/'):
-#     # get the data as a df
-#     data = {}
-#     with open(file_path, 'r') as f:
-#         lines = f.readlines()
-#         for line in lines[1:]:
-#             l = line.split(';')
-#             line_dict = {l[i]: l[i + 1] for i in range(0, len(l), 2) if i + 1 < len(l)}
-#             data[line_dict['model']] = line_dict
-#
-#     df = pd.DataFrame(data).T
-#
-#     # filter df if edit_distance is above 50
-#     df = df[df['edit_distance'].astype(float) < 50]
-#
-#     # Visualize the results global metrics
-#     for metric in ['accuracy', 'edit_distance', 'music_error_rate']:
-#         df[metric] = df[metric].astype(float)
-#         order = df.groupby('test_type')[metric].max().sort_values(ascending=False).index
-#
-#         # Create a box plot with the ordered test types
-#         plt.figure(figsize=(10, 6))
-#         sns.boxplot(x='test_type', y=metric, data=df, order=order)
-#         plt.xticks(rotation=45)
-#         plt.title(f'{metric} by experiment')
-#         plt.xlabel('Experiment')
-#         plt.ylabel(metric)
-#         plt.tight_layout()
-#         plt.savefig(output_path + f'{metric}.png')
-#         plt.close()
-#
-#     # filter df by columns stating with notehead
-#     df_notehead = df[df.columns[pd.Series(df.columns).str.startswith('notehead')]]
-#     # print the max of each column with its index
-#     print(df_notehead)
-
 def mix_multi_predictions(graph, all_predictions, dict_linkType_modelNUmber, label_encoder):
+    """
+    Perform the prediction mixing for the model ensemble.
+    From the prediction of every model and a mapping link_type - model, it selects the prediction of the corresponding
+    model to build the predicted graph.
+    """
     predictions = all_predictions[0]
 
     for i in range(len(predictions)):
@@ -143,10 +120,15 @@ def mix_multi_predictions(graph, all_predictions, dict_linkType_modelNUmber, lab
         predictions[i] = all_predictions[model_to_use][i]
     return predictions
 
+
 def test_model_ensemble(dict_linkType_pathToModel: dict):
+    """
+    test a model ensemble
+    """
     dict_linkType_model = {}
     config = Config()
-    writer = SummaryWriter(log_dir=f"./util_scripts/results/runs/model_ensemble_{str(datetime.now()).replace(' ','_')}")
+    writer = SummaryWriter(
+        log_dir=f"./util_scripts/results/runs/model_ensemble_{str(datetime.now()).replace(' ', '_')}")
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     dataset_loaded = False
     print(datetime.now())
@@ -265,28 +247,26 @@ def test_model_ensemble(dict_linkType_pathToModel: dict):
 seed_everything_(42)
 
 dict_linkType_pathToModel_6_labels = {
-    "noteheadBlack - stem":"./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
-    "noteheadBlack - accidental":"./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
-    "noteheadBlack - flag":"./models/ds_continue_6_labels_123_08-05-2024_07-31.pth",
-    "noteheadBlack - beam":"./models/ds_continue_6_labels_12345_08-02-2024_02-17.pth",
-    "noteheadWholeOrHalf - stem":"./models/ds_continue_6_labels_12345_08-02-2024_12-13.pth",
-    "noteheadWholeOrHalf - accidental":"./models/ds_continue_6_labels_12345_08-04-2024_15-41.pth",
-    "noteheadWholeOrHalf - beam":"./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
-    "noteheadWholeOrHalf - flag":"./models/ds_continue_6_labels_123_08-05-2024_07-31.pth",
+    "noteheadBlack - stem": "./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
+    "noteheadBlack - accidental": "./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
+    "noteheadBlack - flag": "./models/ds_continue_6_labels_123_08-05-2024_07-31.pth",
+    "noteheadBlack - beam": "./models/ds_continue_6_labels_12345_08-02-2024_02-17.pth",
+    "noteheadWholeOrHalf - stem": "./models/ds_continue_6_labels_12345_08-02-2024_12-13.pth",
+    "noteheadWholeOrHalf - accidental": "./models/ds_continue_6_labels_12345_08-04-2024_15-41.pth",
+    "noteheadWholeOrHalf - beam": "./models/ds_continue_6_labels_123_08-04-2024_13-07.pth",
+    "noteheadWholeOrHalf - flag": "./models/ds_continue_6_labels_123_08-05-2024_07-31.pth",
 }
 
-
 dict_linkType_pathToModel_10_labels = {
-    'notehead - stem':"./models/k13_seed3_07-30-2024_15-31.pth",
-    'notehead - accidental':"./models/k13_seed3_07-30-2024_15-31.pth",
-    'notehead - flag':"./models/k13_seed3_07-30-2024_15-31.pth",
+    'notehead - stem': "./models/k13_seed3_07-30-2024_15-31.pth",
+    'notehead - accidental': "./models/k13_seed3_07-30-2024_15-31.pth",
+    'notehead - flag': "./models/k13_seed3_07-30-2024_15-31.pth",
     'notehead - beam': "./models/ds_continue_10_labels_123_08-02-2024_03-17.pth",
 }
 
 # filter the list
-# models = [""]
-# test_model(f'./models/{model}', save_results=True)
+model = "./models/ds_continue_6_labels_123_08-04-2024_13-07.pth"
+test_model(f'./models/{model}', save_results=True)
 
 # mmodel ensemble
 test_model_ensemble(dict_linkType_pathToModel_6_labels)
-test_model_ensemble(dict_linkType_pathToModel_10_labels)

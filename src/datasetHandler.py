@@ -15,8 +15,9 @@ from src.config import Config
 
 class DatasetHandler(Dataset):
     """
-    Class to handle the dataset.
-    It will load the data from the xml files and create a list of torch_geometric.data.Data object
+    Class to handle the datasets.
+    It loads the data from the xml files and create a list of torch_geometric.data.Data object containing
+    the ground true graphs for each score
     """
 
     def __init__(self, config: Config, root="", transform=None, pre_transform=None, pre_filter=None):
