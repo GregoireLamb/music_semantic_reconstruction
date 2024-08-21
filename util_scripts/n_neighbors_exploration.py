@@ -19,17 +19,17 @@ from src.dataLoader import Loader
 #
 ###
 
-output_path = './util_scripts/results/'
-dataset_names = ['musigraph']
-label_to_use = '10_labels'
+output_path = '../util_scripts/results/'
+dataset_names = ['muscima_measure_cut']
+label_to_use = 'full_muscima_labels'
 datasetHandler_list = []
 config = Config()
-n_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+n_values = [13, 14, 15, 20]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 config['labels_to_use'] = label_to_use
 config['undirected_edges'] = False
-config['prefilter_KNN'] = True
+config['prefilter_KNN'] = False
 for dataset_name in dataset_names:
     config['dataset'] = dataset_name
     for n_value in n_values:
@@ -70,7 +70,11 @@ for dataset_name in dataset_names:
         if os.path.isfile(output_path + 'n_neigbhors_exploration.csv'):
             with open(output_path + 'n_neigbhors_exploration.csv', "a") as file:
                 file.write(f'\n{dataset_name},{n_value},'
-                           f'{count_covered_edges},{count_edges_in_knn},{count_objects},{label_to_use},{count_node_ged_df}')
+                           f'{count_covered_edges},{count_edges_in_knn},{count_objects},{label_to_use})')
+                for i, row in count_node_ged_df.iterrows():
+                    print(str(row))
+                    file.write(str(row))
+                    break
         else:
             with open(output_path + 'n_neigbhors_exploration.csv', "w") as file:
                 file.write(

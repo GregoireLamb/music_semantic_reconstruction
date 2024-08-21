@@ -149,7 +149,7 @@ def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWrit
         truth = np.round(graph.truth.tolist())
         predictions = np.round(predictions.tolist())
 
-        ged, mer = compute_ged_mer_for_batch(graph, predictions, truth, config=config)
+        ged, mer = compute_ged_mer_for_batch(graph, predictions,config=config)
         edit_distances.extend(ged)
         music_error_rate.extend(mer)
 
@@ -164,7 +164,7 @@ def test(model: Model, device: torch.device, loader: Loader, writer: SummaryWrit
             predictions_first_score = predictions[0:n_edges]
             truth_first_score = truth[0:n_edges]
 
-            generate_visualizations(first_score, predictions_first_score, writer, score_image, truth_first_score,loader=loader)
+            generate_visualisations(first_score, predictions_first_score, writer, score_image, truth_first_score)
             do_visualize_first_score = False
 
         conf = confusion_matrix(truth, predictions)
@@ -267,8 +267,7 @@ def main(config_path="./config.yml", deep_search=1):
 
 if __name__ == '__main__':
     configs = os.listdir('./waiting_list')
-    for i in range(1):
-        for file in configs:
-            config_path = f'./waiting_list/{file}'
-            main(config_path=config_path, deep_search=5)
+    for file in configs:
+        config_path = f'./waiting_list/{file}'
+        main(config_path=config_path)
 

@@ -73,3 +73,4 @@ for dataset_name in dataset_names:
 
     # save sns plot
     plt.savefig(output_path + f'{dataset_name}_node_link_plot.png')
+    plt.savefig(output_path + f'{dataset_name}_SVG_node_link_plot.svg')

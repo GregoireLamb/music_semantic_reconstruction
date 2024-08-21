@@ -79,6 +79,9 @@ class DatasetHandler(Dataset):
         pass  # Not needed as file are stored locally
 
     def load_label_transform(self, labels_to_use):
+        """
+        Load the file containing the granularity used to one hot encode the primitive labels
+        """
         if os.path.isfile(f'{self.root}./data/labels_and_links/{labels_to_use}.txt'):
             with open(f'{self.root}./data/labels_and_links/{labels_to_use}.txt', 'r') as file:
                 lines = file.readlines()
@@ -172,6 +175,9 @@ class DatasetHandler(Dataset):
         return nodes_list_tmp
 
     def get_score_image(self, score: int):
+        """
+        Return the image of a score for the visualisation
+        """
         score_name = self.raw_file_names[score]
         img = None
 

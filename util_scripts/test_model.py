@@ -16,7 +16,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 
 from src.config import Config
-from src.utils import seed_everything_, generate_visualizations, compute_ged_mer_for_batch, \
+from src.utils import seed_everything_, generate_visualisations, compute_ged_mer_for_batch, \
     perform_predictions_analysis, save_confusion_matrix
 from src.datasetHandler import DatasetHandler
 from src.dataLoader import Loader
@@ -217,7 +217,7 @@ def test_model_ensemble(dict_linkType_pathToModel: dict):
             predictions_first_score = predictions[0:n_edges]
             truth_first_score = truth[0:n_edges]
 
-            generate_visualizations(first_score, predictions_first_score, writer, score_image, truth_first_score,
+            generate_visualisations(first_score, predictions_first_score, writer, score_image, truth_first_score,
                                     loader=loader)
             do_visualize_first_score = False
 

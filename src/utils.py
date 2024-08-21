@@ -21,7 +21,7 @@ from src.model import Model
 
 def seed_everything_(seed: int) -> None:
     """
-    Set the seed for the different libraries
+    Set the seed for the different libraries (do not assert reproducibility)
     """
     # random.seed(seed)
     seed_everything(seed)
@@ -86,21 +86,15 @@ def edit_distance(original_set, predicted_set, config):
         for i in set_3:
             set2.remove(i)
             set2.add((i[1],i[0]))
-    # print('2 Len set 2', len(set2))
 
     dist = len(set1.union(set2)) - len(set1.intersection(set2))
-    # print("-- graph edit dist")
-    # print(set1.intersection(set2))
-    # print("set1", set1)
-    # print("set2", set2)
     mer = -1
     if len(set1) > 0:
         mer = dist / len(set1)
-    # print("dist", dist)
     return dist, mer
 
 
-def compute_ged_mer_for_graph(graph, predictions, true, config, label_encoder=None):
+def compute_ged_mer_for_graph(graph, predictions, config):
     """
     Genrate the list of predicted edges and recover the list of original edges
     and compute the GED and MER
@@ -113,7 +107,7 @@ def compute_ged_mer_for_graph(graph, predictions, true, config, label_encoder=No
     return edit_distance(original_edge_set, predicted_graph.edge_index, config)
 
 
-def compute_ged_mer_for_batch(graph, predictions, truth, config):
+def compute_ged_mer_for_batch(graph, predictions, config):
     """
     Compute the GED and MER for a batch of graphs
     """
@@ -123,7 +117,7 @@ def compute_ged_mer_for_batch(graph, predictions, truth, config):
         n_edges = g.edge_index.shape[1]
         i = j
         j = i + n_edges
-        d, m = compute_ged_mer_for_graph(g, predictions[i:j], truth[i:j], config)
+        d, m = compute_ged_mer_for_graph(g, predictions[i:j], config)
         dist.append(d)
 
         if m != -1:  # if the graph has no edges but there is a false positive
@@ -165,7 +159,7 @@ def perform_predictions_analysis(graph, predictions, truth, label_encoder, dict=
     return dict
 
 
-def generate_visualizations(graph, predictions, writer: SummaryWriter, score_img, truth, loader: DataLoader):
+def generate_visualisations(graph, predictions, writer: SummaryWriter, score_img, truth):
     """
     Generate 3 image of the scores "True positive", "False Positive", "False Negative"
     the corresponding edges are displayed on the image
@@ -179,12 +173,12 @@ def generate_visualizations(graph, predictions, writer: SummaryWriter, score_img
     colors = ["green", "red", "blue"]
 
     for mask, name, color in zip(masks, names, colors):
-        visualize_one_graph(graph, mask, name, score_img, writer, color=color)
+        visualise_one_graph(graph, mask, name, score_img, writer, color=color)
 
 
-def visualize_one_graph(graph, mask, name, score_img, writer: SummaryWriter, color: str):
+def visualise_one_graph(graph, mask, name, score_img, writer: SummaryWriter, color: str):
         """
-        Visualize one graph with the edges selected by the mask and save it
+        Visualise one graph with the edges selected by the mask and save it
         """
         fig, ax = plt.subplots(figsize=(7.5, 7.5), dpi=175)
         ax.imshow(score_img)

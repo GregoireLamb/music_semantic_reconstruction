@@ -139,7 +139,7 @@ class KNNGraphContainer:
 
     def prefilter_KNNGraph(self, graph):
         """"
-        Cut impossible edges based on the node type
+        Cut impossible edges based on the node type (Semantic pruning)
         """
         edges = self.load_authorised_edges()
 
@@ -157,7 +157,7 @@ class KNNGraphContainer:
 
     def load_authorised_edges(self):
         """
-        Load the edges that are allowed in the graph
+        Load the edges that are allowed in the graph; the filter for the semantic pruning
         """
         edges = set()
         path = os.path.abspath("./data/labels_and_links/")
