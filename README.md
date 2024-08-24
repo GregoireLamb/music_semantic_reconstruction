@@ -38,7 +38,7 @@ This list can easily be converted into a feature vector but lack and adjacency o
 To handle this issue we proposed a ruled based method to construct the adjacency matrix based on KNN graphs.
 The training pipeline is illustrated in the following figure:
 
-![Training Pipeline](./illustrations/Training_pipeline.pdf "Training Pipeline")
+![Training Pipeline](./illustrations/Training_pipeline.png "Training Pipeline")
 
 # Reproducing the results
 
