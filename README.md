@@ -4,10 +4,9 @@ Learning How to Construct Music Notation Graphs With Graphs Neural Networks
 ## Context 
 
 This repository contain the code of my master thesis (and Projet de Fin d'Etude (PFE)). 
-This work has been done for a joint degree between the INSA Lyon (département informatic) and the TU Wien (data science master's).
+This work has been done for a joint degree between the INSA Lyon (département informatique) and the TU Wien (MSc Data Science).
 
-
-The script of this thesis can be found here (link to be updatded).
+The script of the thesis can be found here (link to be updated).
 
 ## Introduction 
 
